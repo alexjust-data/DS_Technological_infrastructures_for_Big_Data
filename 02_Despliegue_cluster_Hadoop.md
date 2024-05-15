@@ -520,9 +520,11 @@ root@nodo1:~# sudo -u hadoop sudo whoami
 # nodo2
 root@master:~# ssh -i /root/.ssh/id_rsa root@192.168.0.15 -p 55000
     Welcome to Ubuntu 20.04.1 LTS (GNU/Linux 5.4.0-52-generic x86_64)
+    
 # Añade la siguiente línea al final del archivo:
 root@nodo2:~# sudo visudo
     hadoop ALL=(ALL:ALL) ALL
+
 # Verificar la Config
 root@nodo2:~# sudo -u hadoop sudo whoami
     [sudo] password for hadoop: 
@@ -551,7 +553,7 @@ root@nodo2:~# cat /etc/hosts
 root@nodo1:~# cat /etc/hosts
     127.0.0.1 localhost
     192.168.0.11 master.hadoop.local master
-    192.168.0.14 nodo1.hadoop.local nodo1  # Ensure no extra period and correct `node1` if your hostname is `nodo1`
+    192.168.0.14 nodo1.hadoop.local nodo1  
     192.168.0.15 nodo2.hadoop.local nodo2
     # The following lines are desirable for IPv6 capable hosts
     ::1 ip6-localhost ip6-loopback
@@ -564,9 +566,8 @@ root@nodo1:~# cat /etc/hosts
 root@master:~# cat /etc/hosts
     127.0.0.1 localhost
     192.168.0.11     master.hadoop.local master
-    192.168.0.14     node1.hadoop.local. node1
-    192.168.0.15     node2.hadoop.local node2
-
+    192.168.0.14     nodo1.hadoop.local. nodo1
+    192.168.0.15     nodo2.hadoop.local nodo2
     # The following lines are desirable for IPv6 capable hosts
     ::1 ip6-localhost ip6-loopback
     fe00::0 ip6-localnet
@@ -577,9 +578,488 @@ root@master:~# cat /etc/hosts
 ```
 
 <blockquote style="background-color: #e0f2fe; color: black; border-left: 5px solid #2196f3; padding: 10px;">
-<strong>d)</strong> Arquitectura del Hadoop Cluster: antes de configurar los nodos master & worker es importante definir los elementos de la arquitectura de un Hadoop cluster: el master mantiene el conocimiento sobre el HDFS y planifica los recursos. Este nodo tendrá dos daemons: NameNode que maneja el DFS y el ResourceManager que maneja los trabajos YARN (jobs) y ejecuta los procesos en los
-worker nodes.
+<strong>e) Arquitectura del Hadoop Cluster</strong>: antes de configurar los nodos master & worker es importante definir los elementos de la arquitectura de un Hadoop cluster: el master mantiene el conocimiento sobre el HDFS y planifica los recursos. Este nodo tendrá dos daemons: NameNode que maneja el DFS y el ResourceManager que maneja los trabajos YARN (jobs) y ejecuta los procesos en los worker nodes.
   
-Los Worker almacenan los datos y proveen la potencia para ejecutar los trabajos (ellos serán node1 & node2) y tendrán dos daemons: DataNode que maneja los datos sobre el nodo y se llama NameNode (igual que en el master) y NodeManager que maneja la ejecución de tareas sobre el
-nodo.
+Los Worker almacenan los datos y proveen la potencia para ejecutar los trabajos (ellos serán node1 & node2) y tendrán dos daemons: DataNode que maneja los datos sobre el nodo y se llama NameNode (igual que en el master) y NodeManager que maneja la ejecución de tareas sobre el nodo.
 </blockquote>
+
+Antes de configurar los nodos maestro y trabajadores, es importante definir los elementos de la arquitectura de un clúster Hadoop. El clúster se compone de nodos maestro y nodos trabajadores, cada uno desempeñando roles específicos.
+
+**Nodos Maestro (Master)**
+
+- `NameNode`: Este daemon gestiona el sistema de archivos distribuido de Hadoop (HDFS). Mantiene el árbol de directorios del sistema de archivos y la información de los bloques de datos almacenados en los DataNodes. El NameNode no almacena los datos del usuario, sino que maneja las tablas de metadatos que permiten localizar los datos distribuidos en los DataNodes.
+- `ResourceManager`: Es el componente principal de YARN que gestiona los recursos del clúster y la planificación de las tareas. El ResourceManager coordina la asignación de recursos a las aplicaciones en el clúster.
+
+**Nodos Trabajadores (Workers)**
+
+- `DataNode`: Almacena y recupera los bloques de datos según las solicitudes de los clientes o del NameNode. Realiza operaciones como creación, eliminación y replicación de bloques bajo la instrucción del NameNode.
+- `NodeManager`: Este daemon es responsable de la gestión de los recursos en su nodo. Se comunica con el ResourceManager para iniciar y monitorear la ejecución de contenedores (tareas) en el nodo.
+
+
+Esta arquitectura asegura que el nodo maestro tenga el conocimiento y control sobre el sistema de archivos distribuido y la planificación de recursos, mientras que los nodos trabajadores se encargan del almacenamiento de datos y la ejecución de tareas.
+
+
+<blockquote style="background-color: #e0f2fe; color: black; border-left: 5px solid #2196f3; padding: 10px;">
+<strong>f)</strong> El master utilizará SSH para conectarse a través de PKI. En el master y como usuario hadoop crear las SSH key: </strong>ssh-keygen</strong> (introducir un <enter> a cada pregunta para no indicarle ninguna opción ni passwd). Visualizar la llave pública desde la consola cat /home/hadoop/.ssh/id_rsa.pub, copiar con el mouse, editar en node1/node2 el archivo /home/hadoop/.ssh/authorized_keys. pegarla y salvar (se podría copiar con scp o ssh-copy-id pero el ssh de las MV del OpenNebula solo deja conectarse por PKI y no por usuario/passwd, se podría configurar pero por política de seguridad de la UOC solo admite PKI). Cambiar las protecciones chmod 640 /home/hadoop/.ssh/authorized_keys
+</blockquote>
+
+
+**Configuración de Autenticación SSH mediante PKI**
+
+```sh
+➜  ~ ssh -i .ssh/id_rsa root@84.88.58.69 -p 55000
+    Welcome to Ubuntu 20.04.6 LTS (GNU/Linux 5.4.0-52-generic x86_64)
+
+# Cambiar al usuario hadoop
+root@master:~# su - hadoop
+
+# Genero el par de llaves SSH
+hadoop@master:~$ ssh-keygen
+    Generating public/private rsa key pair.
+    Enter file in which to save the key (/home/hadoop/.ssh/id_rsa): 
+    Created directory '/home/hadoop/.ssh'.
+    Enter passphrase (empty for no passphrase): 
+    Enter same passphrase again: 
+    Your identification has been saved in /home/hadoop/.ssh/id_rsa
+    Your public key has been saved in /home/hadoop/.ssh/id_rsa.pub
+    The key fingerprint is:
+    SHA256:WmiZaegfb2g7hRAz32XL+XS8uN8QHbcqxnXrqHNjKA4 hadoop@master.hadoop.local
+    The key's randomart image is:
+    +---[RSA 3072]----+
+    |                 |
+    |    +     o      |
+    |     = . + o . ..|
+    |    ...=. + . o.+|
+    |    ..B.S  o +.+.|
+    |   . o.o. . + +..|
+    |    . oE   +.o.. |
+    |     .+oo..oo+oo |
+    |     .o+o...=oo..|
+    +----[SHA256]-----+
+
+# copio clave publica
+hadoop@master:~$ cat /home/hadoop/.ssh/id_rsa.pub
+    ssh-rsa AAAAB3NzaC1...6nxMz7M= hadoop@master.hadoop.local
+
+hadoop@master:~$ exit
+```
+
+
+
+**Agregar la Llave Pública a los Nodos Trabajadores:**
+    - A cada nodo trabajador como usuario `root`.
+    - Edito el archivo `authorized_keys` del usuario `hadoop` y pego la llave pública copiada.
+    - Me aseguro de que el directorio `.ssh` y el archivo `authorized_keys` existan.
+
+**En node1:**
+
+```sh
+root@master:~# ssh -i /root/.ssh/id_rsa root@192.168.0.14 -p 55000
+    Welcome to Ubuntu 20.04.6 LTS (GNU/Linux 5.4.0-52-generic x86_64)
+
+# accediendo a hadoop
+root@nodo1:~# su - hadoop
+
+# creando carpeta
+hadoop@nodo1:~$ ls -a
+    .  ..  .bash_logout  .bashrc  .profile
+
+hadoop@nodo1:~$ mkdir -p /home/hadoop/.ssh
+hadoop@nodo1:~$ ls -a
+    .  ..  .bash_logout  .bashrc  .profile  .ssh
+
+# añadiendo codigo key de master hadoop
+hadoop@nodo1:~$ nano /home/hadoop/.ssh/authorized_keys
+
+# generando permisos
+hadoop@nodo1:~$ chmod 640 /home/hadoop/.ssh/authorized_keys
+hadoop@nodo1:~$ exit
+    logout
+root@nodo1:~# exit
+    logout
+```
+    
+**En node2:**
+
+```sh
+root@master:~# ssh -i /root/.ssh/id_rsa root@192.168.0.15 -p 55000
+    Welcome to Ubuntu 20.04.6 LTS (GNU/Linux 5.4.0-52-generic x86_64)
+
+root@nodo2:~# su - hadoop
+hadoop@nodo2:~$ ls -a
+.  ..  .bash_logout  .bashrc  .profile
+hadoop@nodo2:~$ mkdir -p /home/hadoop/.ssh
+hadoop@nodo2:~$ nano /home/hadoop/.ssh/authorized_keys
+
+# generando permisos
+hadoop@nodo2:~$ chmod 640 /home/hadoop/.ssh/authorized_keys
+```
+
+Con estos pasos, la autenticación SSH mediante PKI está configurada correctamente entre el nodo maestro y los nodos trabajadores.
+
+
+<blockquote style="background-color: #e0f2fe; color: black; border-left: 5px solid #2196f3; padding: 10px;">
+<strong>g)</strong> Descargar los binarios de Hadoop. Sobre master y como usuario hadoop descargar (si bien está la version 3.4 se ha utilizado la 3.3.5)
+
+wget https://downloads.apache.org/hadoop/common/hadoop-3.3.5/hadoop-3.3.5.tar.gz
+tar -xzf hadoop-3.3.5.tar.gz
+mv hadoop-3.3.5 hadoop
+</blockquote>
+
+
+ ```sh
+ # Descargar los Binarios de Hadoop
+hadoop@master:~$ wget https://downloads.apache.org/hadoop/common/hadoop-3.3.5/hadoop-3.3.5.tar.gz
+    Saving to: ‘hadoop-3.3.5.tar.gz’
+    hadoop-3.3.5.tar.gz            100%[=================================================>] 673.80M  2.94MB/s    in 3m 49s  
+    2024-05-14 16:40:04 (2.95 MB/s) - ‘hadoop-3.3.5.tar.gz’ saved [706533213/706533213]
+
+# Extraer el Archivo Tar
+hadoop@master:~$ tar -xzf hadoop-3.3.5.tar.gz
+
+# Mover el Directorio Extraído
+hadoop@master:~$ mv hadoop-3.3.5 hadoop
+ ```
+
+ <blockquote style="background-color: #e0f2fe; color: black; border-left: 5px solid #2196f3; padding: 10px;">
+<strong>h) Set Environment Variables</strong>
+
+</blockquote>
+
+```sh
+# Agregar las Variables de Entorno al Archivo .profile
+hadoop@master:~$ nano /home/hadoop/.profile
+    PATH=/home/hadoop/hadoop/bin:/home/hadoop/hadoop/sbin:$PATH
+
+# Agregar las Siguientes Líneas al Archivo .bashrc
+hadoop@master:~$ nano /home/hadoop/.bashrc
+    export HADOOP_HOME=/home/hadoop/hadoop
+    export PATH=${PATH}:${HADOOP_HOME}/bin:${HADOOP_HOME}/sbin
+
+# aplicar cambios
+source /home/hadoop/.profile
+source /home/hadoop/.bashrc
+```
+
+ <blockquote style="background-color: #e0f2fe; color: black; border-left: 5px solid #2196f3; padding: 10px;">
+<strong>i) Configurar</strong>
+</blockquote>
+
+
+```sh
+# Encontrar la Ruta de JAVA_HOME
+hadoop@master:~$ update-alternatives --display java
+    java - auto mode
+    link best version is /usr/lib/jvm/java-11-openjdk-amd64/bin/java
+    link currently points to /usr/lib/jvm/java-11-openjdk-amd64/bin/java
+    link java is /usr/bin/java
+    slave java.1.gz is /usr/share/man/man1/java.1.gz
+    /usr/lib/jvm/java-11-openjdk-amd64/bin/java - priority 1111
+    slave java.1.gz: /usr/lib/jvm/java-11-openjdk-amd64/man/man1/java.1.gz
+
+# Agregar la Variable JAVA_HOME al Archivo hadoop-env.sh
+hadoop@master:~$ nano /home/hadoop/hadoop/etc/hadoop/hadoop-env.sh
+    export JAVA_HOME=/usr/lib/jvm/java-11-openjdk-amd64
+```
+
+<blockquote style="background-color: #e0f2fe; color: black; border-left: 5px solid #2196f3; padding: 10px;">
+<strong>j) Configurar NameNode Location</strong>
+</blockquote>
+
+
+```sh
+# Agregar la Configuración de fs.default.name
+hadoop@master:~$ nano /home/hadoop/hadoop/etc/hadoop/core-site.xml
+    <configuration>
+        <property>
+            <name>fs.default.name</name>
+            <value>hdfs://master:9000</value>
+        </property>
+    </configuration>
+```
+
+<blockquote style="background-color: #e0f2fe; color: black; border-left: 5px solid #2196f3; padding: 10px;">
+<strong>k) Set path for HDFS</strong>
+</blockquote>
+
+La propiedad dfs.replication indica el número de replicas, si se pone 2 los datos estarán duplicados
+en 2 nodos (este valor no puede ser nunca superior al número de worker nodes).
+
+```sh
+# Agregar la Configuración de la Ruta de HDFS:
+nano /home/hadoop/hadoop/etc/hadoop/hdfs-site.xml
+
+    <!-- Put site-specific property overrides in this file. -->
+
+    <configuration>
+        <property>
+            <name>dfs.namenode.name.dir</name>
+            <value>/home/hadoop/data/nameNode</value>
+        </property>
+        <property>
+            <name>dfs.datanode.data.dir</name>
+            <value>/home/hadoop/data/dataNode</value>
+        </property>
+        <property>
+            <name>dfs.replication</name>
+            <value>2</value>
+        </property>
+    </configuration>
+```
+
+<blockquote style="background-color: #e0f2fe; color: black; border-left: 5px solid #2196f3; padding: 10px;">
+<strong>l) Set YARN as Job Scheduler</strong>
+</blockquote>
+
+```sh
+# Editar el Archivo mapred-site.xml
+hadoop@master:~$ nano /home/hadoop/hadoop/etc/hadoop/mapred-site.xml
+
+    <!-- Put site-specific property overrides in this file. -->
+
+    <configuration>
+        <property>
+            <name>mapreduce.framework.name</name>
+            <value>yarn</value>
+        </property>
+        <property>
+            <name>yarn.app.mapreduce.am.env</name>
+            <value>HADOOP_MAPRED_HOME=${HADOOP_HOME}</value>
+        </property>
+        <property>
+            <name>mapreduce.map.env</name>
+            <value>HADOOP_MAPRED_HOME=${HADOOP_HOME}</value>
+        </property>
+        <property>
+            <name>mapreduce.reduce.env</name>
+            <value>HADOOP_MAPRED_HOME=${HADOOP_HOME}</value>
+        </property>
+    </configuration>
+```
+
+<blockquote style="background-color: #e0f2fe; color: black; border-left: 5px solid #2196f3; padding: 10px;">
+<strong>m) Configuro YARN:</strong>
+</blockquote>
+
+```sh
+# Configure YARN:
+hadoop@master:~$ nano /home/hadoop/hadoop/etc/hadoop/yarn-site.xml
+    <configuration>
+    <!-- Site specific YARN configuration properties -->
+        <property>
+            <name>yarn.acl.enable</name>
+            <value>0</value>
+        </property>
+        <property>
+            <name>yarn.resourcemanager.hostname</name>
+            <value>192.168.0.11</value>
+        </property>
+        <property>
+            <name>yarn.nodemanager.aux-services</name>
+            <value>mapreduce_shuffle</value>
+        </property>
+    </configuration>
+```
+
+<blockquote style="background-color: #e0f2fe; color: black; border-left: 5px solid #2196f3; padding: 10px;">
+<strong>n) Configure Workers</strong>
+</blockquote>
+
+
+```sh
+# Editar el Archivo workers
+hadoop@master:~$ nano /home/hadoop/hadoop/etc/hadoop/workers
+    nodo1
+    nodo2
+```
+
+
+<blockquote style="background-color: #e0f2fe; color: black; border-left: 5px solid #2196f3; padding: 10px;">
+<strong>o) Duplicar los archivos de configuración sobre cada nodo</strong>: para ello editar en cada node /etc/ssh/sshd_config y hacia el final cambiar la segunda línea de Port 55000 por Port 22 salvar y
+reiniciar ssh con systemctl restart ssh. Se debe copiar hadoop en cada nodo worker.
+</blockquote>
+
+**Editar el Archivo de Configuración SSH en Cada Nodo**
+
+```sh
+root@master:~# ssh -i /root/.ssh/id_rsa root@192.168.0.14 -p 55000
+root@nodo1:~# nano /etc/ssh/sshd_config
+    # Example of overriding settings on a per-user basis
+    #Match User anoncvs
+    #       X11Forwarding no
+    #       AllowTcpForwarding no
+    #       PermitTTY no
+    #       ForceCommand cvs server
+    PasswordAuthentication no
+    PermitRootLogin without-password
+    UseDNS no
+    Port 22  
+root@nodo1:~# systemctl restart ssh
+```
+
+```sh
+root@nodo2:~# nano /etc/ssh/sshd_config
+    # Example of overriding settings on a per-user basis
+    #Match User anoncvs
+    #       X11Forwarding no
+    #       AllowTcpForwarding no
+    #       PermitTTY no
+    #       ForceCommand cvs server
+    PasswordAuthentication no
+    PermitRootLogin without-password
+    UseDNS no
+    Port 22 
+root@nodo2:~# systemctl restart ssh
+```
+
+```sh
+root@master:~# sudo nano /etc/ssh/sshd_config
+    # Example of overriding settings on a per-user basis
+    #Match User anoncvs
+    #       X11Forwarding no
+    #       AllowTcpForwarding no
+    #       PermitTTY no
+    #       ForceCommand cvs server
+    PasswordAuthentication no
+    PermitRootLogin without-password
+    UseDNS no
+    Port 22  
+```
+
+**Copiar los Binarios de Hadoop a los Nodos Trabajadores**
+
+```sh
+root@master:~# cd /home/hadoop/
+
+root@master:/home/hadoop# ls -l
+    total 689984
+    drwxr-xr-x 10 hadoop hadoop      4096 Mar 15  2023 hadoop
+    -rw-rw-r--  1 hadoop hadoop 706533213 Mar 15  2023 hadoop-3.3.5.tar.gz
+
+root@master:/home/hadoop# scp hadoop-*.tar.gz node1:/home/hadoop
+    The authenticity of host 'node1 (192.168.0.14)' can't be established.
+    ECDSA key fingerprint is SHA256:vp+hCP6fCLL8QkUQkOBkc4SvepgLa8d0gdS/5lfAxXw.
+    Are you sure you want to continue connecting (yes/no/[fingerprint])? yes
+    Warning: Permanently added 'node1,192.168.0.14' (ECDSA) to the list of known hosts.
+    hadoop-3.3.5.tar.gz                                                                     99%  673MB  22.5MB/s   00:00 ETAscp: /home/hadoop/hadoop-3.3.5.tar.gz: No space left on device
+    hadoop-3.3.5.tar.gz                                                                    100%  674MB  24.0MB/s   00:28    
+
+root@master:/home/hadoop# scp hadoop-*.tar.gz node2:/home/hadoop
+    The authenticity of host 'node2 (192.168.0.15)' can't be established.
+    ECDSA key fingerprint is SHA256:ipeXngFsI78NussSM1FtMEK0gI5Z32MZptr7XJ79pW8.
+    Are you sure you want to continue connecting (yes/no/[fingerprint])? yes
+    Warning: Permanently added 'node2,192.168.0.15' (ECDSA) to the list of known hosts.
+    hadoop-3.3.5.tar.gz                                                                    100%  674MB  45.6MB/s   00:14    
+```
+
+**Descomprimir y Mover los Binarios en los Nodos Trabajadores**
+
+```sh
+root@master:~# ssh -i /root/.ssh/id_rsa root@192.168.0.15 -p 22
+root@nodo2:~# cd /home/hadoop
+root@nodo2:/home/hadoop# ls
+    hadoop-3.3.5.tar.gz
+root@nodo2:/home/hadoop# tar -xzf hadoop-3.3.5.tar.gz
+root@nodo2:/home/hadoop# mv hadoop-3.3.5 hadoop
+```
+
+```sh
+root@master:~# ssh -i /root/.ssh/id_rsa root@192.168.0.14 -p 22
+root@nodo1:/home/hadoop# tar -xzf hadoop-3.3.5.tar.gz
+root@nodo1:/home/hadoop# mv hadoop-3.3.5 hadoop
+```
+
+**Copiar la Configuración de Hadoop desde el Nodo Maestro a los Trabajadores**
+
+```sh
+root@master:~# 
+> for node in node1 node2; do
+>     scp -r /home/hadoop/hadoop/etc/hadoop/* $node:/home/hadoop/hadoop/etc/hadoop/
+> done
+    capacity-scheduler.xml                        100% 9213   427.6KB/s   00:00    
+    configuration.xsl                             100% 1335   679.1KB/s   00:00    
+    container-executor.cfg                        100% 2567     1.0MB/s   00:00    
+    ...
+    ...
+    yarnservice-log4j.properties                  100% 2567     1.0MB/s   00:00 
+```
+
+p) Format HDFS: ejecutar sobre master, hdfs namenode -format
+
+<blockquote style="background-color: #e0f2fe; color: black; border-left: 5px solid #2196f3; padding: 10px;">
+<strong>p) Format HDFS</strong>: ejecutar sobre master, hdfs namenode -format
+</blockquote>
+
+`hdfs namenode -format`: Este comando formatea el sistema de archivos del NameNode. Es importante notar que este comando debe ejecutarse una sola vez durante la configuración inicial del clúster Hadoop. Si se ejecuta nuevamente, se perderán todos los datos existentes en el HDFS.
+
+```sh
+root@master:~# su - hadoop
+
+hadoop@master:~$ hdfs namenode -format
+    WARNING: /home/hadoop/hadoop/logs does not exist. Creating.
+    2024-05-15 05:21:45,699 INFO namenode.NameNode: STARTUP_MSG: 
+    /************************************************************
+    STARTUP_MSG: Starting NameNode
+    STARTUP_MSG:   host = master.hadoop.local/192.168.0.11
+    STARTUP_MSG:   args = [-format]
+    STARTUP_MSG:   version = 3.3.5
+    STARTUP_MSG:   classpath = /home/hado
+    ...
+    2024-05-15 05:21:50,074 INFO namenode.NameNode: SHUTDOWN_MSG: 
+    /************************************************************
+    SHUTDOWN_MSG: Shutting down NameNode at master.hadoop.local/192.168.0.11
+    ************************************************************/
+```
+
+<blockquote style="background-color: #e0f2fe; color: black; border-left: 5px solid #2196f3; padding: 10px;">
+<strong>q) Start and Stop HDFS</strong>: sobre master ejecutar start-dfs.sh (stop-dfs.sh para pararlo). Esto inicia
+NameNode & SecondaryNameNode sobre master, y DataNode sobre node1 & node2, de acuerdo a
+la configuración realizada.. Se puede ver con el comando jps y sobre master se verá algo como:
+</blockquote>
+
+**Iniciar HDFS:**
+
+Ejecuto el siguiente comando para iniciar los demonios de HDFS.
+
+```sh
+hadoop@master:~$ $HADOOP_HOME/sbin/start-dfs.sh
+    Starting namenodes on [master]
+    master: Warning: Permanently added 'master,192.168.0.11' (ECDSA) to the list of known hosts.
+    master: hadoop@master: Permission denied (publickey).
+    Starting datanodes
+    localhost: Warning: Permanently added 'localhost' (ECDSA) to the list of known hosts.
+    localhost: hadoop@localhost: Permission denied (publickey).
+    nodo1: WARNING: /home/hadoop/hadoop/logs does not exist. Creating.
+    nodo1: mkdir: cannot create directory ‘/home/hadoop/hadoop/logs’: Permission denied
+    nodo1: ERROR: Unable to create /home/hadoop/hadoop/logs. Aborting.
+    nodo2: ERROR: JAVA_HOME /usr/lib/jvm/java-11-openjdk-amd64 does not exist.
+    Starting secondary namenodes [master.hadoop.local]
+    master.hadoop.local: Warning: Permanently added 'master.hadoop.local' (ECDSA) to the list of known hosts.
+    master.hadoop.local: hadoop@master.hadoop.local: Permission denied (publickey).
+```
+**Problema de Permisos SSH**
+
+Para resolver los errores actuales, necesitamos abordar los problemas de permisos SSH, la configuración de JAVA_HOME en nodo2, y los permisos de directorios en nodo1. 
+
+```sh
+root@nodo1:~# su - hadoop
+hadoop@nodo1:~$ ls -a /home/hadoop/
+.  ..  .bash_history  .bash_logout  .bashrc  .cache  .local  .profile  .ssh  hadoop  hadoop-3.3.5.tar.gz
+
+hadoop@nodo1:~$ chmod 640 /home/hadoop/.ssh/authorized_keys
+hadoop@nodo1:~$ chown -R hadoop:hadoop /home/hadoop/.ssh
+hadoop@nodo1:~$ exit
+```
+
+```sh
+root@nodo2:~# su - hadoop
+hadoop@nodo2:~$ la -a /home/hadoop/
+.  ..  .bash_history  .bash_logout  .bashrc  .local  .profile  .ssh  hadoop  hadoop-3.3.5.tar.gz
+
+hadoop@nodo2:~$ chmod 640 /home/hadoop/.ssh/authorized_keys
+hadoop@nodo2:~$ chown -R hadoop:hadoop /home/hadoop/.ssh
+```
+
+**Problema de Configuración de JAVA_HOME en nodo2**
+
+![](/img/29.png)
