@@ -520,7 +520,7 @@ root@nodo1:~# sudo -u hadoop sudo whoami
 # nodo2
 root@master:~# ssh -i /root/.ssh/id_rsa root@192.168.0.15 -p 55000
     Welcome to Ubuntu 20.04.1 LTS (GNU/Linux 5.4.0-52-generic x86_64)
-    
+
 # Añade la siguiente línea al final del archivo:
 root@nodo2:~# sudo visudo
     hadoop ALL=(ALL:ALL) ALL
@@ -936,7 +936,7 @@ root@master:/home/hadoop# ls -l
     drwxr-xr-x 10 hadoop hadoop      4096 Mar 15  2023 hadoop
     -rw-rw-r--  1 hadoop hadoop 706533213 Mar 15  2023 hadoop-3.3.5.tar.gz
 
-root@master:/home/hadoop# scp hadoop-*.tar.gz node1:/home/hadoop
+root@master:/home/hadoop# scp hadoop-*.tar.gz nodo1:/home/hadoop
     The authenticity of host 'node1 (192.168.0.14)' can't be established.
     ECDSA key fingerprint is SHA256:vp+hCP6fCLL8QkUQkOBkc4SvepgLa8d0gdS/5lfAxXw.
     Are you sure you want to continue connecting (yes/no/[fingerprint])? yes
@@ -944,7 +944,7 @@ root@master:/home/hadoop# scp hadoop-*.tar.gz node1:/home/hadoop
     hadoop-3.3.5.tar.gz                                                                     99%  673MB  22.5MB/s   00:00 ETAscp: /home/hadoop/hadoop-3.3.5.tar.gz: No space left on device
     hadoop-3.3.5.tar.gz                                                                    100%  674MB  24.0MB/s   00:28    
 
-root@master:/home/hadoop# scp hadoop-*.tar.gz node2:/home/hadoop
+root@master:/home/hadoop# scp hadoop-*.tar.gz nodo2:/home/hadoop
     The authenticity of host 'node2 (192.168.0.15)' can't be established.
     ECDSA key fingerprint is SHA256:ipeXngFsI78NussSM1FtMEK0gI5Z32MZptr7XJ79pW8.
     Are you sure you want to continue connecting (yes/no/[fingerprint])? yes
@@ -972,9 +972,8 @@ root@nodo1:/home/hadoop# mv hadoop-3.3.5 hadoop
 **Copiar la Configuración de Hadoop desde el Nodo Maestro a los Trabajadores**
 
 ```sh
-root@master:~# 
-> for node in node1 node2; do
->     scp -r /home/hadoop/hadoop/etc/hadoop/* $node:/home/hadoop/hadoop/etc/hadoop/
+root@master:~# for node in nodo1 nodo2; 
+> do scp -r /home/hadoop/hadoop/etc/hadoop/* $node:/home/hadoop/hadoop/etc/hadoop/
 > done
     capacity-scheduler.xml                        100% 9213   427.6KB/s   00:00    
     configuration.xsl                             100% 1335   679.1KB/s   00:00    
@@ -1037,29 +1036,414 @@ hadoop@master:~$ $HADOOP_HOME/sbin/start-dfs.sh
     master.hadoop.local: Warning: Permanently added 'master.hadoop.local' (ECDSA) to the list of known hosts.
     master.hadoop.local: hadoop@master.hadoop.local: Permission denied (publickey).
 ```
-**Problema de Permisos SSH**
-
-Para resolver los errores actuales, necesitamos abordar los problemas de permisos SSH, la configuración de JAVA_HOME en nodo2, y los permisos de directorios en nodo1. 
+**Problema**
 
 ```sh
+hadoop@master:~$ ls -l ~/.ssh/id_rsa
+ls: cannot access '/home/hadoop/.ssh/id_rsa': No such file or directory
+hadoop@master:~$ ssh-keygen -t rsa -b 2048
+Generating public/private rsa key pair.
+Enter file in which to save the key (/home/hadoop/.ssh/id_rsa): 
+Enter passphrase (empty for no passphrase): 
+Enter same passphrase again: 
+Your identification has been saved in /home/hadoop/.ssh/id_rsa
+Your public key has been saved in /home/hadoop/.ssh/id_rsa.pub
+The key fingerprint is:
+SHA256:mqxvpm+6DxuWEzlDgOduPD9VHLHaXA35Qg+MpLM0144 hadoop@master.hadoop.local
+The key's randomart image is:
++---[RSA 2048]----+
+| ..    .o+..     |
+|. ..   .oo=o     |
+| o  . =.ooo+.    |
+|  .. o Oo+. o    |
+| o  = o.E ..     |
+|  =  *.o         |
+| . o*.+          |
+|   .o*+          |
+|    *%+          |
++----[SHA256]-----+
+```
+```sh
+hadoop@master:~$ cat ~/.ssh/id_rsa.pub >> ~/.ssh/authorized_keys
+hadoop@master:~$ chmod 700 ~/.ssh
+hadoop@master:~$ chmod 600 ~/.ssh/authorized_keys
+hadoop@master:~$ chmod 600 ~/.ssh/id_rsa
+hadoop@master:~$ ssh hadoop@master.hadoop.local
+Welcome to Ubuntu 20.04.6 LTS (GNU/Linux 5.4.0-181-generic x86_64)
+
+ * Documentation:  https://help.ubuntu.com
+ * Management:     https://landscape.canonical.com
+ * Support:        https://ubuntu.com/pro
+
+ System information as of Thu May 16 17:36:42 UTC 2024
+
+  System load:  0.0               Processes:             113
+  Usage of /:   87.0% of 4.67GB   Users logged in:       1
+  Memory usage: 6%                IPv4 address for eth1: 84.88.58.69
+  Swap usage:   0%
+
+  => / is using 87.0% of 4.67GB
+
+ * Strictly confined Kubernetes makes edge and IoT secure. Learn how MicroK8s
+   just raised the bar for easy, resilient and secure K8s cluster deployment.
+
+   https://ubuntu.com/engage/secure-kubernetes-at-the-edge
+
+Expanded Security Maintenance for Applications is not enabled.
+
+0 updates can be applied immediately.
+
+Enable ESM Apps to receive additional future security updates.
+See https://ubuntu.com/esm or run: sudo pro status
+
+New release '22.04.3 LTS' available.
+Run 'do-release-upgrade' to upgrade to it.
+
+
+*** System restart required ***
+
+The programs included with the Ubuntu system are free software;
+the exact distribution terms for each program are described in the
+individual files in /usr/share/doc/*/copyright.
+
+Ubuntu comes with ABSOLUTELY NO WARRANTY, to the extent permitted by
+applicable law.
+```
+```sh
+root@master:~# ssh -i /root/.ssh/id_rsa root@192.168.0.14 -p 22
+    Welcome to Ubuntu 20.04.6 LTS (GNU/Linux 5.4.0-181-generic x86_64)
+
 root@nodo1:~# su - hadoop
-hadoop@nodo1:~$ ls -a /home/hadoop/
-.  ..  .bash_history  .bash_logout  .bashrc  .cache  .local  .profile  .ssh  hadoop  hadoop-3.3.5.tar.gz
-
-hadoop@nodo1:~$ chmod 640 /home/hadoop/.ssh/authorized_keys
-hadoop@nodo1:~$ chown -R hadoop:hadoop /home/hadoop/.ssh
+hadoop@nodo1:~$ mkdir -p ~/.ssh
+hadoop@nodo1:~$ nano ~/.ssh/authorized_keys
+hadoop@nodo1:~$ nano ~/.ssh/authorized_keys
+hadoop@nodo1:~$ chmod 700 ~/.ssh
+hadoop@nodo1:~$ chmod 600 ~/.ssh/authorized_keys
 hadoop@nodo1:~$ exit
+logout
+root@nodo1:~# exit
+logout
+Connection to 192.168.0.14 closed.
 ```
+```sh
+root@master:~# ssh -i /root/.ssh/id_rsa root@192.168.0.26 -p 22
+    Welcome to Ubuntu 20.04.6 LTS (GNU/Linux 5.4.0-182-generic x86_64)
+
+root@nodo2:~# su - hadoop
+hadoop@nodo2:~$ mkdir -p ~/.ssh
+hadoop@nodo2:~$ nano ~/.ssh/authorized_keys
+hadoop@nodo2:~$ nano ~/.ssh/authorized_keys
+hadoop@nodo2:~$ chmod 700 ~/.ssh
+hadoop@nodo2:~$ chmod 600 ~/.ssh/authorized_keys
+hadoop@nodo2:~$ exit
+logout
+root@nodo2:~# exit
+logout
+Connecion to 192.168.0.26 closed.
+```
+```sh
+root@master:~# su - hadoop
+
+hadoop@master:~$ ssh hadoop@nodo2
+    Welcome to Ubuntu 20.04.6 LTS (GNU/Linux 5.4.0-182-generic x86_64)
+hadoop@nodo2:~$ exit
+logout
+
+hadoop@master:~$ ssh hadoop@nodo1
+    Welcome to Ubuntu 20.04.6 LTS (GNU/Linux 5.4.0-181-generic x86_64)
+hadoop@nodo1:~$ exit
+logout
+Connection to nodo1 closed.
+```
+
+**Problemas solucionados...** 
+
+**Arrancamos**
 
 ```sh
-root@nodo2:~# su - hadoop
-hadoop@nodo2:~$ la -a /home/hadoop/
-.  ..  .bash_history  .bash_logout  .bashrc  .local  .profile  .ssh  hadoop  hadoop-3.3.5.tar.gz
+hadoop@master:~$ start-dfs.sh
+    Starting namenodes on [master]
+    Starting datanodes
+    nodo2: datanode is running as process 3399.  Stop it first and ensure /tmp/hadoop-hadoop-datanode.pid file is empty before retry.
+    nodo1: datanode is running as process 10977.  Stop it first and ensure /tmp/hadoop-hadoop-datanode.pid file is empty before retry.
+    Starting secondary namenodes [master.hadoop.local]
 
-hadoop@nodo2:~$ chmod 640 /home/hadoop/.ssh/authorized_keys
-hadoop@nodo2:~$ chown -R hadoop:hadoop /home/hadoop/.ssh
+hadoop@master:~$ jps
+    29872 Jps
+    29698 SecondaryNameNode
+    29364 NameNode
+    29500 DataNode
+
+hadoop@master:~$ ssh hadoop@nodo1
+    Welcome to Ubuntu 20.04.6 LTS (GNU/Linux 5.4.0-181-generic x86_64)
+
+hadoop@nodo1:~$ jps
+    10977 DataNode
+    12364 Jps
+
+hadoop@master:~$ ssh hadoop@nodo2
+    Welcome to Ubuntu 20.04.6 LTS (GNU/Linux 5.4.0-182-generic x86_64)
+
+hadoop@nodo2:~$ jps
+    3399 DataNode
+    4730 Jps
+
 ```
 
-**Problema de Configuración de JAVA_HOME en nodo2**
 
-![](/img/29.png)
+<blockquote style="background-color: #e0f2fe; color: black; border-left: 5px solid #2196f3; padding: 10px;">
+<strong>r) Monitor del HDFS Cluster</strong>: se puede obtener información con hdfs dfsadmin -report. Y también desde otra MV que ya tenga disponible con un navegador en la URL y que esté
+conectada a la red privada http://192.168.0.1:9870, donde 192.168.0.1 es la IP del master.
+</blockquote>
+
+
+Obtener información del clúster HDFS
+
+```sh
+# reporte
+hadoop@master:~$ hdfs dfsadmin -report
+Configured Capacity: 15033864192 (14.00 GB)
+Present Capacity: 2016595968 (1.88 GB)
+DFS Remaining: 2016522240 (1.88 GB)
+DFS Used: 73728 (72 KB)
+DFS Used%: 0.00%
+Replicated Blocks:
+	Under replicated blocks: 0
+	Blocks with corrupt replicas: 0
+	Missing blocks: 0
+	Missing blocks (with replication factor 1): 0
+	Low redundancy blocks with highest priority to recover: 0
+	Pending deletion blocks: 0
+Erasure Coded Block Groups: 
+	Low redundancy block groups: 0
+	Block groups with corrupt internal blocks: 0
+	Missing block groups: 0
+	Low redundancy blocks with highest priority to recover: 0
+	Pending deletion blocks: 0
+
+-------------------------------------------------
+Live datanodes (3):
+
+Name: 192.168.0.11:9866 (master.hadoop.local)
+Hostname: master.hadoop.local
+Decommission Status : Normal
+Configured Capacity: 5011288064 (4.67 GB)
+DFS Used: 24576 (24 KB)
+Non DFS Used: 4361019392 (4.06 GB)
+DFS Remaining: 633466880 (604.12 MB)
+DFS Used%: 0.00%
+DFS Remaining%: 12.64%
+Configured Cache Capacity: 0 (0 B)
+Cache Used: 0 (0 B)
+Cache Remaining: 0 (0 B)
+Cache Used%: 100.00%
+Cache Remaining%: 0.00%
+Xceivers: 0
+Last contact: Thu May 16 17:57:17 UTC 2024
+Last Block Report: Thu May 16 17:50:20 UTC 2024
+Num of Blocks: 0
+
+
+Name: 192.168.0.14:9866 (nodo1.hadoop.local.)
+Hostname: nodo1.hadoop.local
+Decommission Status : Normal
+Configured Capacity: 5011288064 (4.67 GB)
+DFS Used: 24576 (24 KB)
+Non DFS Used: 4320751616 (4.02 GB)
+DFS Remaining: 673734656 (642.52 MB)
+DFS Used%: 0.00%
+DFS Remaining%: 13.44%
+Configured Cache Capacity: 0 (0 B)
+Cache Used: 0 (0 B)
+Cache Remaining: 0 (0 B)
+Cache Used%: 100.00%
+Cache Remaining%: 0.00%
+Xceivers: 0
+Last contact: Thu May 16 17:57:18 UTC 2024
+Last Block Report: Thu May 16 17:50:18 UTC 2024
+Num of Blocks: 0
+
+
+Name: 192.168.0.26:9866 (nodo2.hadoop.local)
+Hostname: nodo2.hadoop.local
+Decommission Status : Normal
+Configured Capacity: 5011288064 (4.67 GB)
+DFS Used: 24576 (24 KB)
+Non DFS Used: 4285165568 (3.99 GB)
+DFS Remaining: 709320704 (676.46 MB)
+DFS Used%: 0.00%
+DFS Remaining%: 14.15%
+Configured Cache Capacity: 0 (0 B)
+Cache Used: 0 (0 B)
+Cache Remaining: 0 (0 B)
+Cache Used%: 100.00%
+Cache Remaining%: 0.00%
+Xceivers: 0
+Last contact: Thu May 16 17:57:18 UTC 2024
+Last Block Report: Thu May 16 17:50:16 UTC 2024
+Num of Blocks: 0
+```
+
+**Monitorear HDFS desde una URL**
+Para monitorear el HDFS desde una URL en otra máquina que esté en la red privada, abre un navegador web y accede a la siguiente URL (reemplaza 192.168.0.1 con la IP del maestro):
+
+```sh
+http://192.168.0.1:9870
+```
+
+<blockquote style="background-color: #e0f2fe; color: black; border-left: 5px solid #2196f3; padding: 10px;">
+<strong>s) Subir y obtener datos del HDFS:</strong> para leer y escribir en el HDFS se hace con hdfs dfs -comando. Primero se crea un directorio y el resto de los comandos serán en relación a este.
+</blockquote>
+
+Para leer y escribir en el HDFS, sigue los siguientes pasos:
+
+```sh
+# 1. Crear un Directorio en HDFS
+hadoop@master:~$ hdfs dfs -mkdir -p /user/hadoop
+
+# 2. Crear un Subdirectorio books
+hadoop@master:~$ hdfs dfs -mkdir /user/hadoop/books
+
+# 3. Descargar los Libros del Proyecto Gutenberg
+hadoop@master:~$ cd /home/hadoop
+hadoop@master:~$ wget -O alice.txt https://www.gutenberg.org/files/11/11-0.txt
+--2024-05-16 18:03:47--  https://www.gutenberg.org/files/11/11-0.txt
+Resolving www.gutenberg.org (www.gutenberg.org)... 152.19.134.47, 2610:28:3090:3000:0:bad:cafe:47
+Connecting to www.gutenberg.org (www.gutenberg.org)|152.19.134.47|:443... connected.
+HTTP request sent, awaiting response... 200 OK
+Length: 154638 (151K) [text/plain]
+Saving to: ‘alice.txt’
+
+alice.txt                           100%[=================================================================>] 151.01K   396KB/s    in 0.4s    
+
+2024-05-16 18:03:48 (396 KB/s) - ‘alice.txt’ saved [154638/154638]
+
+hadoop@master:~$ wget -O holmes.txt https://www.gutenberg.org/files/1661/1661-0.txt
+--2024-05-16 18:03:55--  https://www.gutenberg.org/files/1661/1661-0.txt
+Resolving www.gutenberg.org (www.gutenberg.org)... 152.19.134.47, 2610:28:3090:3000:0:bad:cafe:47
+Connecting to www.gutenberg.org (www.gutenberg.org)|152.19.134.47|:443... connected.
+HTTP request sent, awaiting response... 200 OK
+Length: 607504 (593K) [text/plain]
+Saving to: ‘holmes.txt’
+
+holmes.txt                          100%[=================================================================>] 593.27K   736KB/s    in 0.8s    
+
+2024-05-16 18:03:57 (736 KB/s) - ‘holmes.txt’ saved [607504/607504]
+
+hadoop@master:~$ wget -O frankenstein.txt https://www.gutenberg.org/files/84/84-0.txt
+--2024-05-16 18:04:03--  https://www.gutenberg.org/files/84/84-0.txt
+Resolving www.gutenberg.org (www.gutenberg.org)... 152.19.134.47, 2610:28:3090:3000:0:bad:cafe:47
+Connecting to www.gutenberg.org (www.gutenberg.org)|152.19.134.47|:443... connected.
+HTTP request sent, awaiting response... 200 OK
+Length: 448642 (438K) [text/plain]
+Saving to: ‘frankenstein.txt’
+
+frankenstein.txt                    100%[=================================================================>] 438.13K   691KB/s    in 0.6s    
+
+2024-05-16 18:04:04 (691 KB/s) - ‘frankenstein.txt’ saved [448642/448642]
+
+# 4. Subir los Libros al Directorio books en HDFS
+hadoop@master:~$ hdfs dfs -put alice.txt holmes.txt frankenstein.txt /user/hadoop/books
+
+# 5. Listar el Contenido del Directorio books en HDFS
+hadoop@master:~$ hdfs dfs -ls /user/hadoop/books
+Found 3 items
+-rw-r--r--   2 hadoop supergroup     154638 2024-05-16 18:06 /user/hadoop/books/alice.txt
+-rw-r--r--   2 hadoop supergroup     448642 2024-05-16 18:06 /user/hadoop/books/frankenstein.txt
+-rw-r--r--   2 hadoop supergroup     607504 2024-05-16 18:06 /user/hadoop/books/holmes.txt
+
+# 6. Mover el Contenido del HDFS al Sistema de Archivos Local
+hadoop@master:~$ hdfs dfs -get /user/hadoop/books/alice.txt
+get: alice.txt: File exists
+
+# 7. Visualizar el Contenido desde el HDFS
+hadoop@master:~$ hdfs dfs -cat /user/hadoop/books/alice.txt
+
+    *** START OF THE PROJECT GUTENBERG EBOOK ALICE'S ADVENTURES IN
+    WONDERLAND ***
+    [Illustration]
+
+    Alice’s Adventures in Wonderland
+    by Lewis Carroll
+
+    THE MILLENNIUM FULCRUM EDITION 3.0
+
+    Contents
+
+    CHAPTER I.     Down the Rabbit-Hole
+    CHAPTER II.    The Pool of Tears
+    CHAPTER III.   A Caucus-Race and a Long Tale
+    CHAPTER IV.    The Rabbit Sends in a Little Bill
+    CHAPTER V.     Advice from a Caterpillar
+    CHAPTER VI.    Pig and Pepper
+    CHAPTER VII.   A Mad Tea-Party
+    CHAPTER VIII.  The Queen’s Croquet-Ground
+    CHAPTER IX.    The Mock Turtle’s Story
+    CHAPTER X.     The Lobster Quadrille
+    CHAPTER XI.    Who Stole the Tarts?
+    CHAPTER XII.   Alice’s Evidence
+
+# 8. Obtener Ayuda de los Comandos de HDFS
+hadoop@master:~$ hdfs dfs -help
+```
+
+<blockquote style="background-color: #e0f2fe; color: black; border-left: 5px solid #2196f3; padding: 10px;">
+<strong>t) Run Yarn:</strong> HDFS es un distributed storage system, pero no ejecuta ni planifica las tareas, esto lo realiza el YARN y para iniciarlo: start-yarn.sh (y para pararlo stop-yarn.sh). Se puede verificar con el comando jps y se verá que ahora hay un ResourceManager sobre master, y NodeManager sobre node1 & node2.
+</blockquote>
+
+Esto iniciará el ResourceManager en el nodo maestro y el NodeManager en los nodos trabajadores. Puedes verificar que los servicios se hayan iniciado correctamente utilizando el comando jps.
+
+```sh
+hadoop@master:~$ start-yarn.sh
+    Starting resourcemanager
+    Starting nodemanagers
+
+hadoop@master:~$ jps
+    30498 ResourceManager
+    29698 SecondaryNameNode
+    30660 NodeManager
+    29364 NameNode
+    31020 Jps
+    29500 DataNode
+
+hadoop@nodo2:~$ jps
+    5072 Jps
+    4883 NodeManager
+    3399 DataNode
+
+hadoop@nodo1:~$ jps
+    10977 DataNode
+    12712 Jps
+    12521 NodeManager
+```
+
+<blockquote style="background-color: #e0f2fe; color: black; border-left: 5px solid #2196f3; padding: 10px;">
+<strong>u) </strong> Para ver los nodos yarn node -list y las aplicaciones con yarn application -list (para más opciones/detalles yarn -help) También desde un navegador http://193.168.0.1:8088, donde 192.168.0.1 es la IP del nodo master.
+</blockquote>
+
+Para ver los nodos y aplicaciones en YARN
+
+```sh
+hadoop@master:~$ yarn node -list
+2024-05-16 18:16:06,819 INFO client.DefaultNoHARMFailoverProxyProvider: Connecting to ResourceManager at /192.168.0.11:8032
+Total Nodes:3
+         Node-Id	     Node-State	Node-Http-Address	Number-of-Running-Containers
+nodo1.hadoop.local:42871	        RUNNING	nodo1.hadoop.local:8042	                           0
+nodo2.hadoop.local:40215	        RUNNING	nodo2.hadoop.local:8042	                           0
+master.hadoop.local:43885	        RUNNING	master.hadoop.local:8042	                           0
+
+
+# Listar las aplicaciones en YARN:
+hadoop@master:~$ yarn application -list
+2024-05-16 18:16:45,852 INFO client.DefaultNoHARMFailoverProxyProvider: Connecting to ResourceManager at /192.168.0.11:8032
+Total number of applications (application-types: [], states: [SUBMITTED, ACCEPTED, RUNNING] and tags: []):0
+                Application-Id	    Application-Name	    Application-Type	      User	     Queue	             State	       Final-State	       Progress	                       Tracking-URL
+
+# También puedes acceder a la interfaz web de YARN ResourceManager en tu navegador web:
+http://192.168.0.1:8088
+```
+
+
+<blockquote style="background-color: #e0f2fe; color: black; border-left: 5px solid #2196f3; padding: 10px;">
+<strong>v) Enviar MapReduce Jobs a YARN </strong> 
+</blockquote>
