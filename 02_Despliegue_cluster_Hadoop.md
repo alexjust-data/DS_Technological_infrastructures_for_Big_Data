@@ -1440,10 +1440,660 @@ Total number of applications (application-types: [], states: [SUBMITTED, ACCEPTE
                 Application-Id	    Application-Name	    Application-Type	      User	     Queue	             State	       Final-State	       Progress	                       Tracking-URL
 
 # También puedes acceder a la interfaz web de YARN ResourceManager en tu navegador web:
-http://192.168.0.1:8088
+http://192.168.0.11:8088
 ```
 
 
 <blockquote style="background-color: #e0f2fe; color: black; border-left: 5px solid #2196f3; padding: 10px;">
 <strong>v) Enviar MapReduce Jobs a YARN </strong> 
 </blockquote>
+
+
+```sh
+root@master:~# sudo iptables -A INPUT -p tcp --dport 22 -j ACCEPT
+root@master:~# sudo iptables-save
+
+# regla conexiones puerto 22
+root@master:~# sudo iptables -L -v -n
+Chain INPUT (policy ACCEPT 142 packets, 22619 bytes)
+ pkts bytes target     prot opt in     out     source               destination         
+   12   804 ACCEPT     tcp  --  *      *       0.0.0.0/0            0.0.0.0/0            tcp dpt:8088
+17092 1154K ACCEPT     icmp --  *      *       0.0.0.0/0            0.0.0.0/0            icmptype 8
+    0     0 ACCEPT     tcp  --  *      *       0.0.0.0/0            0.0.0.0/0            tcp dpt:8088
+    0     0 ACCEPT     tcp  --  *      *       0.0.0.0/0            0.0.0.0/0            tcp dpt:22
+
+Chain FORWARD (policy ACCEPT 0 packets, 0 bytes)
+ pkts bytes target     prot opt in     out     source               destination         
+ 196K  383M ACCEPT     all  --  eth1   eth0    0.0.0.0/0            0.0.0.0/0            state RELATED,ESTABLISHED
+ 118K 6988K ACCEPT     all  --  eth0   eth1    0.0.0.0/0            0.0.0.0/0           
+
+Chain OUTPUT (policy ACCEPT 109 packets, 15881 bytes)
+ pkts bytes target     prot opt in     out     source               destination         
+   12   804 ACCEPT     tcp  --  *      *       0.0.0.0/0            0.0.0.0/0            tcp dpt:8088
+17086 1154K ACCEPT     icmp --  *      *       0.0.0.0/0            0.0.0.0/0            icmptype 0
+
+
+root@master:~# systemctl restart ssh
+```
+
+```sh
+# agrego
+hadoop@master:~$ nano ~/.bashrc
+    export HADOOP_HOME=/home/hadoop/hadoop
+    export PATH=$PATH:$HADOOP_HOME/bin:$HADOOP_HOME/sbin
+
+# cargo variables
+root@master:~# source ~/.bashrc
+
+# verifico haddop
+root@master:~# hadoop version
+    Hadoop 3.3.5
+
+# start
+root@master:~# start-dfs.sh
+    Starting namenodes on [master]
+    master: namenode is running as process 29364.  Stop it first and ensure /tmp/hadoop-hadoop-namenode.pid file is empty before retry.
+    Starting datanodes
+    localhost: datanode is running as process 29500.  Stop it first and ensure /tmp/hadoop-hadoop-datanode.pid file is empty before retry.
+    nodo1: datanode is running as process 10977.  Stop it first and ensure /tmp/hadoop-hadoop-datanode.pid file is empty before retry.
+    nodo2: datanode is running as process 3399.  Stop it first and ensure /tmp/hadoop-hadoop-datanode.pid file is empty before retry.
+    Starting secondary namenodes [master.hadoop.local]
+    master.hadoop.local: secondarynamenode is running as process 29698.  Stop it first and ensure /tmp/hadoop-hadoop-secondarynamenode.pid file is empty before retry.
+
+# Start
+root@master:~# start-yarn.sh
+    Starting resourcemanager
+    ERROR: Attempting to operate on yarn resourcemanager as root
+    ERROR: but there is no YARN_RESOURCEMANAGER_USER defined. Aborting operation.
+    Starting nodemanagers
+    ERROR: Attempting to operate on yarn nodemanager as root
+    ERROR: but there is no YARN_NODEMANAGER_USER defined. Aborting operation.
+```
+
+**errores**
+
+```sh
+root@master:~# rm -f /tmp/hadoop-hadoop-namenode.pid
+root@master:~# rm -f /tmp/hadoop-hadoop-datanode.pid
+root@master:~# rm -f /tmp/hadoop-hadoop-secondarynamenode.pid
+
+root@master:~# ssh -i /root/.ssh/id_rsa root@192.168.0.14 -p 22
+root@nodo1:~# rm -f /tmp/hadoop-hadoop-datanode.pid
+root@nodo1:~# exit
+    logout
+    Connection to 192.168.0.14 closed.
+
+root@master:~# ssh -i /root/.ssh/id_rsa root@192.168.0.26 -p 22
+root@nodo2:~# rm -f /tmp/hadoop-hadoop-datanode.pid
+root@nodo2:~# exit
+    logout
+    Connection to 192.168.0.26 closed.
+root@master:~# nano ~/.bashrc
+root@master:~# source ~/.bashrc
+root@master:~# start-dfs.sh
+    Starting namenodes on [master]
+    Starting datanodes
+    Starting secondary namenodes [master.hadoop.local]
+root@master:~# start-yarn.sh
+    Starting resourcemanager
+    resourcemanager is running as process 32209.  Stop it first and ensure /tmp/hadoop-hadoop-resourcemanager.pid file is empty before retry.
+    Starting nodemanagers
+    localhost: nodemanager is running as process 32361.  Stop it first and ensure /tmp/hadoop-hadoop-nodemanager.pid file is empty before retry.
+    nodo1: nodemanager is running as process 12966.  Stop it first and ensure /tmp/hadoop-hadoop-nodemanager.pid file is empty before retry.
+    nodo2: nodemanager is running as process 5338.  Stop it first and ensure /tmp/hadoop-hadoop-nodemanager.pid file is empty before retry.
+
+root@master:~# jps
+    32209 ResourceManager
+    44065 DataNode
+    44705 Jps
+    32361 NodeManager
+    44302 SecondaryNameNode
+    43919 NameNode
+
+root@master:~# ssh -i /root/.ssh/id_rsa root@192.168.0.14 -p 22
+root@nodo1:~# jps
+    12966 NodeManager
+    15015 Jps
+    14745 DataNode
+root@nodo1:~# exit
+    logout
+    Connection to 192.168.0.14 closed.
+
+root@master:~# ssh -i /root/.ssh/id_rsa root@192.168.0.26 -p 22
+root@nodo2:~# jps
+    7652 Jps
+    7366 DataNode
+    5338 NodeManager
+root@nodo2:~# exit
+    logout
+    Connection to 192.168.0.26 closed.
+
+root@master:~# yarn node -list
+    2024-05-17 10:46:47,186 INFO client.DefaultNoHARMFailoverProxyProvider: Connecting to ResourceManager at /192.168.0.11:8032
+    Total Nodes:3
+            Node-Id	     Node-State	Node-Http-Address	Number-of-Running-Containers
+    nodo2.hadoop.local:34205	        RUNNING	nodo2.hadoop.local:8042	                           0
+    nodo1.hadoop.local:33669	        RUNNING	nodo1.hadoop.local:8042	                           0
+    master.hadoop.local:43897	        RUNNING	master.hadoop.local:8042	                           0
+
+root@master:~# yarn application -list
+    2024-05-17 10:46:53,374 INFO client.DefaultNoHARMFailoverProxyProvider: Connecting to ResourceManager at /192.168.0.11:8032
+    Total number of applications (application-types: [], states: [SUBMITTED, ACCEPTED, RUNNING] and tags: []):0
+                    Application-Id	    Application-Name	    Application-Type	      User	     Queue	             State	       Final-State	       Progress	                       Tracking-URL
+
+```
+
+```sh
+root@master:~# sudo iptables -A INPUT -p tcp --dport 22 -j ACCEPT
+root@master:~# sudo iptables -A INPUT -p tcp --dport 55000 -j ACCEPT
+root@master:~# sudo iptables-save
+```
+
+```sh
+hadoop@master:~$ nano $HADOOP_HOME/etc/hadoop/yarn-site.xml
+    <configuration>
+        <!-- Site specific YARN configuration properties -->
+        <property>
+            <name>yarn.acl.enable</name>
+            <value>0</value>
+        </property>
+        <property>
+            <name>yarn.resourcemanager.hostname</name>
+            <value>192.168.0.11</value>
+        </property>
+        <property>
+            <name>yarn.resourcemanager.address</name>
+            <value>0.0.0.0:8032</value>
+        </property>
+        <property>
+            <name>yarn.resourcemanager.scheduler.address</name>
+            <value>0.0.0.0:8030</value>
+        </property>
+        <property>
+            <name>yarn.resourcemanager.resource-tracker.address</name>
+            <value>0.0.0.0:8031</value>
+        </property>
+        <property>
+            <name>yarn.resourcemanager.admin.address</name>
+            <value>0.0.0.0:8033</value>
+        </property>
+        <property>
+            <name>yarn.resourcemanager.webapp.address</name>
+            <value>0.0.0.0:8088</value>
+        </property>
+        <property>
+            <name>yarn.nodemanager.aux-services</name>
+            <value>mapreduce_shuffle</value>
+        </property>
+    </configuration>
+```
+
+
+```sh
+hadoop@master:~$ yarn jar /home/hadoop/hadoop/share/hadoop/mapreduce/hadoop-mapreduce-examples-3.3.5.jar wordcount "books/*" output
+
+2024-05-17 13:25:14,949 INFO mapreduce.Job:  map 100% reduce 100%
+2024-05-17 13:25:14,968 INFO mapreduce.Job: Job job_1715950294901_0001 completed successfully
+2024-05-17 13:25:15,440 INFO mapreduce.Job: Counters: 56
+	File System Counters
+		FILE: Number of bytes read=475214
+		FILE: Number of bytes written=2054985
+		FILE: Number of read operations=0
+		FILE: Number of large read operations=0
+		FILE: Number of write operations=0
+		HDFS: Number of bytes read=1211125
+		HDFS: Number of bytes written=271943
+		HDFS: Number of read operations=14
+		HDFS: Number of large read operations=0
+		HDFS: Number of write operations=2
+		HDFS: Number of bytes read erasure-coded=0
+	Job Counters 
+		Killed map tasks=1
+		Launched map tasks=3
+		Launched reduce tasks=1
+		Data-local map tasks=2
+		Rack-local map tasks=1
+		Total time spent by all maps in occupied slots (ms)=51830
+		Total time spent by all reduces in occupied slots (ms)=5239
+		Total time spent by all map tasks (ms)=51830
+		Total time spent by all reduce tasks (ms)=5239
+		Total vcore-milliseconds taken by all map tasks=51830
+		Total vcore-milliseconds taken by all reduce tasks=5239
+		Total megabyte-milliseconds taken by all map tasks=53073920
+		Total megabyte-milliseconds taken by all reduce tasks=5364736
+	Map-Reduce Framework
+		Map input records=23429
+		Map output records=212209
+		Map output bytes=2030419
+		Map output materialized bytes=475226
+		Input split bytes=341
+		Combine input records=212209
+		Combine output records=32641
+		Reduce input groups=24742
+		Reduce shuffle bytes=475226
+		Reduce input records=32641
+		Reduce output records=24742
+		Spilled Records=65282
+		Shuffled Maps =3
+		Failed Shuffles=0
+		Merged Map outputs=3
+		GC time elapsed (ms)=684
+		CPU time spent (ms)=4100
+		Physical memory (bytes) snapshot=931336192
+		Virtual memory (bytes) snapshot=10590457856
+		Total committed heap usage (bytes)=631255040
+		Peak Map Physical memory (bytes)=273195008
+		Peak Map Virtual memory (bytes)=2646167552
+		Peak Reduce Physical memory (bytes)=148111360
+		Peak Reduce Virtual memory (bytes)=2652889088
+	Shuffle Errors
+		BAD_ID=0
+		CONNECTION=0
+		IO_ERROR=0
+		WRONG_LENGTH=0
+		WRONG_MAP=0
+		WRONG_REDUCE=0
+	File Input Format Counters 
+		Bytes Read=1210784
+	File Output Format Counters 
+		Bytes Written=271943
+
+hadoop@master:~$ hdfs dfs -ls output
+    Found 2 items
+    -rw-r--r--   2 hadoop supergroup          0 2024-05-17 13:25 output/_SUCCESS
+    -rw-r--r--   2 hadoop supergroup     271943 2024-05-17 13:25 output/part-r-00000
+```
+
+**Creamos un puente local ~ Nebula**
+```sh
+➜  ~ ssh -L 8088:localhost:8088 -i ~/.ssh/id_rsa -p 55000 hadoop@84.88.58.69
+```
+
+```sh
+http://localhost:8088/cluster
+```
+
+![](/img/31.png)
+
+
+<blockquote style="background-color: #e0f2fe; color: black; border-left: 5px solid #2196f3; padding: 10px;">
+<strong>2. </strong> Sobre el Cluster Hadoop y teniendo como referencia el programa de contar palabras,
+desarrollar el Map y el Reduce en Python como se indican en los apuntes Arquitecturas
+de software para el Big Data punto 2.3.1. Bajar el archivo de recetas en formato CSV
+desde 
+
+https://analisi.transparenciacatalunya.cat/Salut/Receptes-facturades-al-Servei-Catal-de-la-Salut/thrd-jj3r 
+
+desde la pestaña Exportar -> CSV. En base al material mencionado desarrollar el map y reduce (mapper-rec.py y reducerrec.py) y probarlos que funcionan externamente (con Python y sin Hadoop) y luego ejecutarlos en Hadoop. Analizar el rendimiento tanto con la ejecución con y sin Hadoop y extraer conclusiones.
+</blockquote>
+
+```sh
+root@master:~# wget -O rece.csv https://analisi.transparenciacatalunya.cat/Salut/Receptes-facturades-al-Servei-Catal-de-la-Salut/thrd-jj3r/export?format=csv
+```
+
+**mapper-rec.py**
+
+```py
+#!/usr/bin/env python3
+
+import sys
+
+for line in sys.stdin:
+    line = line.strip()  # quitar espacios en blanco al inicio y final de la línea
+
+    if line[0] == "a":  # quitar la cabecera que comienza por 'a'
+        continue
+
+    words = line.split(",")  # separar los campos por ','
+
+    wordFinal = []  # array de campos finales (incluidos los separados por ',')
+    union = ""  # string temporal para ir juntando las partes de los campos
+    for word in words:  # para todos los campos
+        if word[0] == "\"":  # si el campo comienza por '"'
+            union = word.replace(word[0], "")  # se agrega a unión y se quita la '"' y continua
+            continue
+        if union != "" and word[len(word) - 1] != "\"":  # si ya se tienen las partes y no se ha llegado al final
+            union = union + word
+        elif union != "" and word[len(word) - 1] == "\"":  # si ya se tienen partes y se ha llegado al final
+            word = word.replace('\"', "")
+            wordFinal.append(union + word)
+            union = ""  # se borra unión para el próximo
+        else:
+            wordFinal.append(word)  # en caso contrario se agrega
+
+    wordsNoWhite = wordFinal[13].replace(" ", "_")  # cambia los espacios en blanco por "_"
+    print('%s\t%s' % (wordsNoWhite, 1))  # se generan las tuplas con el campo 13.
+```
+
+**reducer-rec.py**
+
+```py
+#!/usr/bin/env python3
+
+from operator import itemgetter
+import sys
+
+current_word = None
+current_count = 0
+word = None
+
+for line in sys.stdin:  # input comes from stdin
+    line = line.strip()  # remove leading and trailing whitespace
+    word, count = line.split('\t', 1)  # parse the input we got from mapper.py
+    try:
+        count = int(count)
+    except ValueError:
+        continue
+
+    if current_word == word:
+        current_count += count
+    else:
+        if current_word:
+            print('%s\t%s' % (current_word, current_count))
+        current_count = count
+        current_word = word
+
+if current_word == word:
+    print('%s\t%s' % (current_word, current_count))
+```
+
+
+```sh
+# permisos de los archivos para que sean ejecutables
+➜  git git:(main) ✗ chmod +x mapper-rec.py
+➜  git git:(main) ✗ chmod +x reducer-rec.py
+
+# pruebo localmente
+➜  git git:(main) ✗ cat receptes.csv | ./mapper-rec.py | sort | ./reducer-rec.py
+    ACTH	198
+    AGONISTES_OPIACIS	8720
+    Acido_aminosalicilico_y_agentes_similares	23647
+    Acido_ascorbico_(vitamina_C)_monofarmaco	1134
+    Acido_folico_y_derivados	28610
+    Acido_salicilico_y_derivados	10300
+    Acidos_biliares_y_derivados	22180
+    Adrenergicos_en_combinacion_con_anticolinergicos_combinaciones_con_corticosteroides_incl.	18289
+    Adrenergicos_en_combinacion_con_corticosteroides_u_otras_agentes_excluyendo_los_anticolinergicos	33709
+    Agentes_adrenergicos_y_dopaminergicos	25414
+    Agentes_antialergicos_excluyendo_corticosteroides	19471
+    Agentes_antiinflamatorios_no_esteroideos	21848
+    Agentes_antiinflamatorios_no_esteroideos_y_antiinfecciosos_en_combinacion	925
+    ...
+    ...
+    ...
+```
+
+**Ejecutar los Scripts en Hadoop**
+
+```sh
+➜  git git:(main) ✗ scp -P 55000 receptes.csv hadoop@84.88.58.69:/home/hadoop/
+    receptes.csv                              100% 1197MB   3.0MB/s   06:35  
+
+➜  git git:(main) ✗ scp -P 55000 mapper-rec.py hadoop@84.88.58.69:/home/hadoop/   
+    mapper-rec.py                             100% 1324    45.8KB/s   00:00    
+
+➜  git git:(main) ✗ scp -P 55000 reducer-rec.py hadoop@84.88.58.69:/home/hadoop/
+    reducer-rec.py                            100%  681    22.0KB/s   00:00    
+```
+
+```sh
+hadoop@master:~$ ls -l /home/hadoop/
+    total 1917372
+    -rw-rw-r--  1 hadoop hadoop     154638 Feb  4 09:09 alice.txt
+    drwxrwxr-x  4 hadoop hadoop       4096 May 16 17:50 data
+    -rw-rw-r--  1 hadoop hadoop     448642 Dec  2  2022 frankenstein.txt
+    drwxr-xr-x 11 hadoop hadoop       4096 May 15 05:21 hadoop
+    -rw-rw-r--  1 hadoop hadoop  706533213 Mar 15  2023 hadoop-3.3.5.tar.gz
+    -rw-rw-r--  1 hadoop hadoop     607504 Oct 10  2023 holmes.txt
+    -rwxr-xr-x  1 hadoop hadoop       1324 May 17 18:16 mapper-rec.py
+    -rw-r--r--  1 hadoop hadoop 1255600000 May 17 18:04 receptes.csv
+    -rwxr-xr-x  1 hadoop hadoop        681 May 17 18:16 reducer-rec.py
+```
+
+```sh
+hadoop@master:~$ hadoop fs -mkdir -p /user/hadoop/recetas
+hadoop@master:~$ hadoop fs -put /home/hadoop/receptes.csv /user/hadoop/recetas
+hadoop@master:~$ hadoop fs -put /home/hadoop/mapper-rec.py /user/hadoop/recetas
+hadoop@master:~$ hadoop fs -put /home/hadoop/reducer-rec.py /user/hadoop/recetas
+hadoop@master:~$ hadoop fs -ls /user/hadoop/recetas
+    Found 3 items
+    -rw-r--r--   2 hadoop supergroup       1324 2024-05-17 18:27 /user/hadoop/recetas/mapper-rec.py
+    -rw-r--r--   2 hadoop supergroup 1255600000 2024-05-17 18:27 /user/hadoop/recetas/receptes.csv
+    -rw-r--r--   2 hadoop supergroup        681 2024-05-17 18:28 /user/hadoop/recetas/reducer-rec.py
+```
+
+**Continuar con la Ejecución del Trabajo en Hadoop**
+
+```sh
+hadoop jar /home/hadoop/hadoop/share/hadoop/tools/lib/hadoop-streaming-3.3.5.jar \
+-mapper /user/hadoop/recetas/mapper-rec.py \
+-reducer /user/hadoop/recetas/reducer-rec.py \
+-input /user/hadoop/recetas/receptes.csv \
+-output /user/hadoop/recetas/output
+```
+
+**PROBLEMAS**
+
+He tenido que incrementar la memoria de cada máquina virtual a 10Gb
+
+![](/img/32.png)
+
+```sh
+hadoop@master:~$ start-dfs.sh
+    Starting namenodes on [master]
+    Starting datanodes
+    Starting secondary namenodes [master.hadoop.local]
+
+hadoop@master:~$ start-yarn.sh
+    Starting resourcemanager
+    Starting nodemanagers
+
+hadoop@master:~$ yarn node -list
+    2024-05-18 08:01:45,729 INFO client.DefaultNoHARMFailoverProxyProvider: Connecting to ResourceManager at /0.0.0.0:8032
+    Total Nodes:1
+            Node-Id	     Node-State	Node-Http-Address	Number-of-Running-Containers
+    master.hadoop.local:34691	        RUNNING	master.hadoop.local:8042	                           0
+
+hadoop@master:~$ yarn application -list
+    2024-05-18 08:01:50,820 INFO client.DefaultNoHARMFailoverProxyProvider: Connecting to ResourceManager at /0.0.0.0:8032
+    Total number of applications (application-types: [], states: [SUBMITTED, ACCEPTED, RUNNING] and tags: []):0
+                    Application-Id	    Application-Name	    Application-Type	      User	     Queue	             State	       Final-State	       Progress	                       Tracking-URL
+```
+
+**Tubería local ~ master**
+
+```sh
+➜  ~ ssh -L 8088:localhost:8088 -i ~/.ssh/id_rsa -p 55000 hadoop@84.88.58.69
+    Welcome to Ubuntu 20.04.6 LTS (GNU/Linux 5.4.0-182-generic x86_64)
+hadoop@master:~$ 
+```
+
+```sh
+http://localhost:8088/cluster/
+```
+
+```sh
+hadoop@master:~$ hadoop fs -ls /user/hadoop/recetas
+    Found 4 items
+    -rwxr-xr-x   2 hadoop supergroup       1324 2024-05-17 18:27 /user/hadoop/recetas/mapper-rec.py
+    drwxr-xr-x   - hadoop supergroup          0 2024-05-18 09:17 /user/hadoop/recetas/output
+    -rw-r--r--   2 hadoop supergroup 1255600000 2024-05-17 18:27 /user/hadoop/recetas/receptes.csv
+    -rwxr-xr-x   2 hadoop supergroup        681 2024-05-17 18:28 /user/hadoop/recetas/reducer-rec.py
+```
+
+```sh
+hadoop@master:~$ hadoop fs -chmod +x /user/hadoop/recetas/mapper-rec.py
+hadoop@master:~$ hadoop fs -chmod +x /user/hadoop/recetas/reducer-rec.py
+
+hadoop@master:~$ hadoop fs -copyToLocal /user/hadoop/recetas/mapper-rec.py .
+    copyToLocal: mapper-rec.py: File exists
+
+hadoop@master:~$ hadoop fs -copyToLocal /user/hadoop/recetas/reducer-rec.py .
+    copyToLocal: reducer-rec.py: File exists
+```
+
+**Instalando python master, nodo1, nodo2**
+
+```sh
+root@master:~# sudo apt update
+root@master:~# sudo apt install python3
+root@master:~# python3 --version
+    Python 3.8.10
+```
+
+```sh
+root@nodo1:~# sudo apt update
+root@nodo1:~# sudo apt install python3
+root@nodo1:~# python3 --version
+    Python 3.8.10
+```
+
+```sh
+root@nodo2:~# sudo apt update
+root@nodo2:~# sudo apt install python3
+root@nodo2:~# python3 --version
+    Python 3.8.10
+```
+
+
+```sh
+hadoop@master:~$ hadoop fs -rm -r /user/hadoop/recetas/output
+    Deleted /user/hadoop/recetas/output
+
+hadoop@master:~$ yarn jar $HADOOP_HOME/share/hadoop/tools/lib/hadoop-streaming-3.3.5.jar \
+> -input /user/hadoop/recetas/receptes.csv \
+> -output /user/hadoop/recetas/output \
+> -mapper /home/hadoop/mapper-rec.py \
+> -reducer /home/hadoop/reducer-rec.py
+
+    packageJobJar: [/tmp/hadoop-unjar16061167299127096850/] [] /tmp/streamjob5434767623560579355.jar tmpDir=null
+    2024-05-18 10:23:59,908 INFO client.DefaultNoHARMFailoverProxyProvider: Connecting to ResourceManager at /0.0.0.0:8032
+    2024-05-18 10:24:00,180 INFO client.DefaultNoHARMFailoverProxyProvider: Connecting to ResourceManager at /0.0.0.0:8032
+    2024-05-18 10:24:00,518 INFO mapreduce.JobResourceUploader: Disabling Erasure Coding for path: /tmp/hadoop-yarn/staging/hadoop/.staging/job_1716019302363_0008
+    2024-05-18 10:24:01,935 INFO impl.YarnClientImpl: Submitted application application_1716019302363_0008
+    2024-05-18 10:24:01,968 INFO mapreduce.Job: The url to track the job: http://master.hadoop.local:8088/proxy/application_1716019302363_0008/
+    2024-05-18 10:24:01,970 INFO mapreduce.Job: Running job: job_1716019302363_0008
+    2024-05-18 10:24:12,281 INFO mapreduce.Job: Job job_1716019302363_0008 running in uber mode : false
+    2024-05-18 10:24:12,285 INFO mapreduce.Job:  map 0% reduce 0%
+    ...
+    ...
+    2024-05-18 10:26:51,946 INFO mapreduce.Job:  map 100% reduce 47%
+    2024-05-18 10:26:57,992 INFO mapreduce.Job:  map 100% reduce 78%
+    2024-05-18 10:27:04,023 INFO mapreduce.Job:  map 100% reduce 97%
+    2024-05-18 10:27:05,035 INFO mapreduce.Job:  map 100% reduce 100%
+    2024-05-18 10:27:06,056 INFO mapreduce.Job: Job job_1716019302363_0008 completed successfully
+    2024-05-18 10:27:06,248 INFO mapreduce.Job: Counters: 55
+    2024-05-18 10:27:06,257 INFO streaming.StreamJob: Output directory: /user/hadoop/recetas/output
+
+hadoop@master:~$ hadoop fs -ls /user/hadoop/recetas/output
+    Found 2 items
+    -rw-r--r--   2 hadoop supergroup          0 2024-05-18 10:27 /user/hadoop/recetas/output/_SUCCESS
+    -rw-r--r--   2 hadoop supergroup      17639 2024-05-18 10:27 /user/hadoop/recetas/output/part-00000
+```
+
+
+## Comparativa de Rendimiento: Ejecución Local vs Hadoop
+
+```sh
+➜  git git:(main) ✗ time (cat receptes.csv | python3 mapper-rec.py | sort | python3 reducer-rec.py > reducer_output.txt)
+
+( cat receptes.csv | python3 mapper-rec.py | sort | python3 reducer-rec.py > )  69.69s user 4.18s system 111% cpu 1:06.01 total
+```
+
+```sh
+hadoop@master:~$ time (yarn jar $HADOOP_HOME/share/hadoop/tools/lib/hadoop-streaming-3.3.5.jar \
+> -input /user/hadoop/recetas/receptes.csv \
+> -output /user/hadoop/recetas/output \
+> -mapper /home/hadoop/mapper-rec.py \
+> -reducer /home/hadoop/reducer-rec.py)
+
+packageJobJar: [/tmp/hadoop-unjar18034978716552019164/] [] /tmp/streamjob14178942302182188566.jar tmpDir=null
+2024-05-18 10:38:37,756 INFO mapreduce.Job: Running job: job_1716019302363_0009
+2024-05-18 10:38:48,109 INFO mapreduce.Job: Job job_1716019302363_0009 running in uber mode : false
+2024-05-18 10:38:48,113 INFO mapreduce.Job:  map 0% reduce 0%
+...
+...
+2024-05-18 10:41:44,744 INFO mapreduce.Job:  map 100% reduce 98%
+2024-05-18 10:41:45,754 INFO mapreduce.Job:  map 100% reduce 100%
+2024-05-18 10:41:45,767 INFO mapreduce.Job: Job job_1716019302363_0009 completed successfully
+2024-05-18 10:41:45,994 INFO mapreduce.Job: Counters: 55
+	File System Counters
+		FILE: Number of bytes read=238201145
+		FILE: Number of bytes written=479465569
+		HDFS: Number of write operations=2
+		HDFS: Number of bytes read erasure-coded=0
+	Job Counters 
+		Killed map tasks=3
+		Launched map tasks=13
+		Total megabyte-milliseconds taken by all map tasks=870288384
+		Total megabyte-milliseconds taken by all reduce tasks=89778176
+	Map-Reduce Framework
+		Map input records=6160558
+		Map output records=6160557
+		Map output bytes=225862484
+		Map output materialized bytes=238201199
+		Input split bytes=1030
+		Combine input records=0
+		Combine output records=0
+		Reduce input groups=443
+		Reduce shuffle bytes=238201199
+		Reduce input records=6160557
+		Reduce output records=443
+		Spilled Records=12321114
+		Shuffled Maps =10
+		Failed Shuffles=0
+		Merged Map outputs=10
+		GC time elapsed (ms)=7108
+		CPU time spent (ms)=93140
+		Physical memory (bytes) snapshot=3103965184
+		Virtual memory (bytes) snapshot=29151420416
+		Total committed heap usage (bytes)=2274152448
+		Peak Map Physical memory (bytes)=284626944
+		Peak Map Virtual memory (bytes)=2670575616
+		Peak Reduce Physical memory (bytes)=478236672
+		Peak Reduce Virtual memory (bytes)=2669363200
+	Shuffle Errors
+		BAD_ID=0
+		CONNECTION=0
+		IO_ERROR=0
+		WRONG_LENGTH=0
+		WRONG_MAP=0
+		WRONG_REDUCE=0
+	File Input Format Counters 
+		Bytes Read=1255636864
+	File Output Format Counters 
+		Bytes Written=17639
+2024-05-18 10:41:46,003 INFO streaming.StreamJob: Output directory: /user/hadoop/recetas/output
+
+real	3m13.954s
+user	0m5.767s
+sys	0m0.440s
+```
+
+
+#### Análisis de Rendimiento
+
+**Ejecución Local**: Real: 1 minuto 6 segundos
+**Ejecución en Hadoop:** Real: 3 minutos 13 segundos
+
+#### Razones del Mayor Tiempo en Hadoop
+
+1. **Overhead de Configuración y Comunicación:** Hadoop tiene un overhead significativo relacionado con la configuración del trabajo, la comunicación entre nodos y la gestión de recursos.
+2. **Distribución de Datos:** El tiempo que tarda Hadoop en dividir, distribuir y leer los datos desde HDFS puede ser considerable, especialmente para conjuntos de datos más pequeños.
+3. **Latencia de Red:** La comunicación entre los nodos puede añadir latencia adicional, lo cual no ocurre en una ejecución local donde todo sucede en la misma máquina.
+4. **Tiempo de Arranque de Tareas:** Iniciar y finalizar tareas en un entorno distribuido tiene un costo en términos de tiempo. En un entorno local, el tiempo de arranque de los procesos es mucho menor.
+5. **Manejo de Fases Intermedias:** Hadoop maneja fases intermedias de Shuffle y Sort, lo cual es crucial para grandes volúmenes de datos, pero puede ser innecesariamente costoso para conjuntos de datos más pequeños.
+
+
+
+### Conclusiones
+
+En **Conjuntos de Datos Pequeños** la ejecución local puede ser más rápida y eficiente. Sin embargo en **Grandes Volúmenes de Datos** Hadoop es más adecuado debido a su capacidad de escalar horizontalmente. El tiempo adicional en Hadoop se debe principalmente a la sobrecarga inicial y a la gestión de recursos en un entorno distribuido.
+
+**Optimización en Hadoop**
+
+- **Configuración del Número de Splits:** Ajustar el número de splits para que los datos se procesen de manera más eficiente.
+- **Tamaño del Bloque de HDFS:** Ajustar el tamaño del bloque de HDFS para optimizar el rendimiento.
+- **Uso de Combiner** : Implementar un combiner para reducir la cantidad de datos que necesitan ser transferidos entre el mapper y el reducer.
+
+En definitiva creo que el uso de Hadoop está justificado principalmente cuando se manejan grandes volúmenes de datos distribuidos. Para tareas más pequeñas o pruebas iniciales, la ejecución local es más rápida y sencilla. A medida que los datos y la complejidad crecen, Hadoop ofrece las herramientas necesarias para manejar y procesar datos a gran escala de manera eficiente.
