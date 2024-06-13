@@ -1,0 +1,1758 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>03_Despliegue_de_IaC.md</title>
+<meta http-equiv="Content-type" content="text/html;charset=UTF-8">
+
+<style>
+/* https://github.com/microsoft/vscode/blob/master/extensions/markdown-language-features/media/markdown.css */
+/*---------------------------------------------------------------------------------------------
+ *  Copyright (c) Microsoft Corporation. All rights reserved.
+ *  Licensed under the MIT License. See License.txt in the project root for license information.
+ *--------------------------------------------------------------------------------------------*/
+
+body {
+	font-family: var(--vscode-markdown-font-family, -apple-system, BlinkMacSystemFont, "Segoe WPC", "Segoe UI", "Ubuntu", "Droid Sans", sans-serif);
+	font-size: var(--vscode-markdown-font-size, 14px);
+	padding: 0 26px;
+	line-height: var(--vscode-markdown-line-height, 22px);
+	word-wrap: break-word;
+}
+
+#code-csp-warning {
+	position: fixed;
+	top: 0;
+	right: 0;
+	color: white;
+	margin: 16px;
+	text-align: center;
+	font-size: 12px;
+	font-family: sans-serif;
+	background-color:#444444;
+	cursor: pointer;
+	padding: 6px;
+	box-shadow: 1px 1px 1px rgba(0,0,0,.25);
+}
+
+#code-csp-warning:hover {
+	text-decoration: none;
+	background-color:#007acc;
+	box-shadow: 2px 2px 2px rgba(0,0,0,.25);
+}
+
+body.scrollBeyondLastLine {
+	margin-bottom: calc(100vh - 22px);
+}
+
+body.showEditorSelection .code-line {
+	position: relative;
+}
+
+body.showEditorSelection .code-active-line:before,
+body.showEditorSelection .code-line:hover:before {
+	content: "";
+	display: block;
+	position: absolute;
+	top: 0;
+	left: -12px;
+	height: 100%;
+}
+
+body.showEditorSelection li.code-active-line:before,
+body.showEditorSelection li.code-line:hover:before {
+	left: -30px;
+}
+
+.vscode-light.showEditorSelection .code-active-line:before {
+	border-left: 3px solid rgba(0, 0, 0, 0.15);
+}
+
+.vscode-light.showEditorSelection .code-line:hover:before {
+	border-left: 3px solid rgba(0, 0, 0, 0.40);
+}
+
+.vscode-light.showEditorSelection .code-line .code-line:hover:before {
+	border-left: none;
+}
+
+.vscode-dark.showEditorSelection .code-active-line:before {
+	border-left: 3px solid rgba(255, 255, 255, 0.4);
+}
+
+.vscode-dark.showEditorSelection .code-line:hover:before {
+	border-left: 3px solid rgba(255, 255, 255, 0.60);
+}
+
+.vscode-dark.showEditorSelection .code-line .code-line:hover:before {
+	border-left: none;
+}
+
+.vscode-high-contrast.showEditorSelection .code-active-line:before {
+	border-left: 3px solid rgba(255, 160, 0, 0.7);
+}
+
+.vscode-high-contrast.showEditorSelection .code-line:hover:before {
+	border-left: 3px solid rgba(255, 160, 0, 1);
+}
+
+.vscode-high-contrast.showEditorSelection .code-line .code-line:hover:before {
+	border-left: none;
+}
+
+img {
+	max-width: 100%;
+	max-height: 100%;
+}
+
+a {
+	text-decoration: none;
+}
+
+a:hover {
+	text-decoration: underline;
+}
+
+a:focus,
+input:focus,
+select:focus,
+textarea:focus {
+	outline: 1px solid -webkit-focus-ring-color;
+	outline-offset: -1px;
+}
+
+hr {
+	border: 0;
+	height: 2px;
+	border-bottom: 2px solid;
+}
+
+h1 {
+	padding-bottom: 0.3em;
+	line-height: 1.2;
+	border-bottom-width: 1px;
+	border-bottom-style: solid;
+}
+
+h1, h2, h3 {
+	font-weight: normal;
+}
+
+table {
+	border-collapse: collapse;
+}
+
+table > thead > tr > th {
+	text-align: left;
+	border-bottom: 1px solid;
+}
+
+table > thead > tr > th,
+table > thead > tr > td,
+table > tbody > tr > th,
+table > tbody > tr > td {
+	padding: 5px 10px;
+}
+
+table > tbody > tr + tr > td {
+	border-top: 1px solid;
+}
+
+blockquote {
+	margin: 0 7px 0 5px;
+	padding: 0 16px 0 10px;
+	border-left-width: 5px;
+	border-left-style: solid;
+}
+
+code {
+	font-family: Menlo, Monaco, Consolas, "Droid Sans Mono", "Courier New", monospace, "Droid Sans Fallback";
+	font-size: 1em;
+	line-height: 1.357em;
+}
+
+body.wordWrap pre {
+	white-space: pre-wrap;
+}
+
+pre:not(.hljs),
+pre.hljs code > div {
+	padding: 16px;
+	border-radius: 3px;
+	overflow: auto;
+}
+
+pre code {
+	color: var(--vscode-editor-foreground);
+	tab-size: 4;
+}
+
+/** Theming */
+
+.vscode-light pre {
+	background-color: rgba(220, 220, 220, 0.4);
+}
+
+.vscode-dark pre {
+	background-color: rgba(10, 10, 10, 0.4);
+}
+
+.vscode-high-contrast pre {
+	background-color: rgb(0, 0, 0);
+}
+
+.vscode-high-contrast h1 {
+	border-color: rgb(0, 0, 0);
+}
+
+.vscode-light table > thead > tr > th {
+	border-color: rgba(0, 0, 0, 0.69);
+}
+
+.vscode-dark table > thead > tr > th {
+	border-color: rgba(255, 255, 255, 0.69);
+}
+
+.vscode-light h1,
+.vscode-light hr,
+.vscode-light table > tbody > tr + tr > td {
+	border-color: rgba(0, 0, 0, 0.18);
+}
+
+.vscode-dark h1,
+.vscode-dark hr,
+.vscode-dark table > tbody > tr + tr > td {
+	border-color: rgba(255, 255, 255, 0.18);
+}
+
+</style>
+
+<style>
+/* Tomorrow Theme */
+/* http://jmblog.github.com/color-themes-for-google-code-highlightjs */
+/* Original theme - https://github.com/chriskempson/tomorrow-theme */
+
+/* Tomorrow Comment */
+.hljs-comment,
+.hljs-quote {
+	color: #8e908c;
+}
+
+/* Tomorrow Red */
+.hljs-variable,
+.hljs-template-variable,
+.hljs-tag,
+.hljs-name,
+.hljs-selector-id,
+.hljs-selector-class,
+.hljs-regexp,
+.hljs-deletion {
+	color: #c82829;
+}
+
+/* Tomorrow Orange */
+.hljs-number,
+.hljs-built_in,
+.hljs-builtin-name,
+.hljs-literal,
+.hljs-type,
+.hljs-params,
+.hljs-meta,
+.hljs-link {
+	color: #f5871f;
+}
+
+/* Tomorrow Yellow */
+.hljs-attribute {
+	color: #eab700;
+}
+
+/* Tomorrow Green */
+.hljs-string,
+.hljs-symbol,
+.hljs-bullet,
+.hljs-addition {
+	color: #718c00;
+}
+
+/* Tomorrow Blue */
+.hljs-title,
+.hljs-section {
+	color: #4271ae;
+}
+
+/* Tomorrow Purple */
+.hljs-keyword,
+.hljs-selector-tag {
+	color: #8959a8;
+}
+
+.hljs {
+	display: block;
+	overflow-x: auto;
+	color: #4d4d4c;
+	padding: 0.5em;
+}
+
+.hljs-emphasis {
+	font-style: italic;
+}
+
+.hljs-strong {
+	font-weight: bold;
+}
+</style>
+
+<style>
+/*
+ * Markdown PDF CSS
+ */
+
+ body {
+	font-family: -apple-system, BlinkMacSystemFont, "Segoe WPC", "Segoe UI", "Ubuntu", "Droid Sans", sans-serif, "Meiryo";
+	padding: 0 12px;
+}
+
+pre {
+	background-color: #f8f8f8;
+	border: 1px solid #cccccc;
+	border-radius: 3px;
+	overflow-x: auto;
+	white-space: pre-wrap;
+	overflow-wrap: break-word;
+}
+
+pre:not(.hljs) {
+	padding: 23px;
+	line-height: 19px;
+}
+
+blockquote {
+	background: rgba(127, 127, 127, 0.1);
+	border-color: rgba(0, 122, 204, 0.5);
+}
+
+.emoji {
+	height: 1.4em;
+}
+
+code {
+	font-size: 14px;
+	line-height: 19px;
+}
+
+/* for inline code */
+:not(pre):not(.hljs) > code {
+	color: #C9AE75; /* Change the old color so it seems less like an error */
+	font-size: inherit;
+}
+
+/* Page Break : use <div class="page"/> to insert page break
+-------------------------------------------------------- */
+.page {
+	page-break-after: always;
+}
+
+</style>
+
+<script src="https://unpkg.com/mermaid/dist/mermaid.min.js"></script>
+</head>
+<body>
+  <script>
+    mermaid.initialize({
+      startOnLoad: true,
+      theme: document.body.classList.contains('vscode-dark') || document.body.classList.contains('vscode-high-contrast')
+          ? 'dark'
+          : 'default'
+    });
+  </script>
+<h1 id="infraestructuras-tecnol%C3%B3gicas-para-el-big-data">Infraestructuras tecnológicas para el Big Data</h1>
+<h2 id="despliegue-de-iac">Despliegue de IaC</h2>
+<p>Objetivos: desplegar infraestructura como código utilizando diferentes herramientas.</p>
+<p><strong>Acceso con AWS CLI y un usuario federado:</strong></p>
+<p>Recordar siempre utilizar instancias pequeñas (tiny y micro AWS) y verificar que tanto las instancias como los discos creados son eliminados después que se ha realizado todas las pruebas. Para AWS CLI y obtener las claves y tokens:</p>
+<p>URL al acceso federado a AWS:</p>
+<p>https://id-provider.uoc.edu/idp/profile/SAML2/Unsolicited/SSO?providerId=arn:aws:iam::579845986493:saml-provider/UOCLABS&amp;target=https://eu-central-1.console.aws.amazon.com/console/home?region=eu-central-1#</p>
+<p>y la región activa es: eu-central-1</p>
+<p>Dado que en AWS se dispone de un usuario federado es necesario extraer las claves y token de acceso desde el acceso institucional. Si bien se puede extraer en forma manual es más fácil utilizar la extensión de Chrome https://github.com/prolane/samltoawsstskeys/blob/master/README.md.</p>
+<p>Cuando se conectan a AWS mediante la URL que les han pasado desde la UOC, esta extensión generará un archivo llamado credentials en el directorio Download que tenga configurado Chrome con el siguiente contenido:</p>
+<p>[default]</p>
+<ul>
+<li>aws_access_key_id = ************</li>
+<li>aws_secret_access_key = ***************</li>
+<li>aws_session_token = **************</li>
+</ul>
+<p>Se debe luego instalar la aws cli https://docs.aws.amazon.com/cli/latest/userguide/cli-chap-welcome.html y reemplazar el archivo .aws/credentials con el contenido de este archivo. Luego se debe modificar el .aws/config con el siguiente contenido (o la zona por defecto que tengan asignada):</p>
+<p>[default]</p>
+<ul>
+<li>region = eu-central-1</li>
+<li>output = json</li>
+</ul>
+<p>Verificar que funciona ejecutando por ejemplo aws s3 ls.</p>
+<blockquote style="background-color: #e0f2fe; color: black; border-left: 5px solid #2196f3; padding: 10px;">
+1. Prueba de concepto sobre AWS:   Utilizando Ansible se despliega un website con Apache2 (se podr&#xE1; hacer desde una MV, desde OpenNebula o desde el propio host).
+</blockquote>
+<p><strong>Instalando AWS Command Line Interface (AWS CLI)</strong></p>
+<p>Install or update to the latest version of the AWS CLI
+https://docs.aws.amazon.com/cli/latest/userguide/getting-started-install.html</p>
+<ol>
+<li>In your browser, download the macOS pkg file: https://awscli.amazonaws.com/AWSCLIV2.pkg</li>
+<li>Run your downloaded file and follow the on-screen instructions. You can choose to install the AWS CLI in the following ways:
+<ol>
+<li>For all users on the computer (requires sudo)
+<ol>
+<li>You can install to any folder, or choose the recommended default folder of /usr/local/aws-cli.</li>
+<li>The installer automatically creates a symlink at /usr/local/bin/aws that links to the main program in the installation folder you chose.</li>
+</ol>
+</li>
+</ol>
+</li>
+</ol>
+<p>El comando sudo <code>ln -s /usr/local/aws-cli/aws /usr/local/bin/aws</code> tiene el propósito de crear un enlace simbólico (o &quot;symlink&quot;) para el ejecutable aws del AWS CLI en el directorio <code>/usr/local/bin</code>. Este enlace permite que puedas ejecutar el comando aws desde cualquier lugar en tu terminal, sin tener que especificar la ruta completa.</p>
+<pre class="hljs"><code><div><span class="hljs-comment"># creo enlace simbolico</span>
+➜  ~ sudo ln -s /usr/<span class="hljs-built_in">local</span>/aws-cli/aws /usr/<span class="hljs-built_in">local</span>/bin/aws
+    Password:
+    ln: /usr/<span class="hljs-built_in">local</span>/bin/aws: File exists
+
+<span class="hljs-comment"># compruebo que se ha creado el enlace simbólico</span>
+➜  ~ ls -l /usr/<span class="hljs-built_in">local</span>/bin/aws
+    lrwxr-xr-x  1 root  admin  22 Jun 10 10:03 /usr/<span class="hljs-built_in">local</span>/bin/aws -&gt; /usr/<span class="hljs-built_in">local</span>/aws-cli/aws 
+
+➜  ~ <span class="hljs-built_in">which</span> aws
+/usr/<span class="hljs-built_in">local</span>/bin/aws
+
+➜  ~ aws --version
+    aws-cli/2.16.4 Python/3.11.8 Darwin/23.3.0 exe/x86_64
+</div></code></pre>
+<p>A partir de ahora, puedes usar los comandos de AWS CLI sin necesidad de especificar la ruta completa al ejecutable.</p>
+<p>El directorio <code>~/.aws</code> es un estándar para almacenar configuraciones y credenciales de AWS CLI en tu directorio de inicio, es un directorio específico en tu carpeta de inicio que AWS CLI usa para almacenar archivos de configuración y credenciales. Este directorio es diferente de los directorios donde se instala el software AWS CLI (/usr/local/aws-cli) y el enlace simbólico (/usr/local/bin/aws).</p>
+<pre class="hljs"><code><div>➜  ~ <span class="hljs-built_in">pwd</span>
+    /Users/alex
+
+➜  ~ mkdir -p ~/.aws
+➜  ~ nano ~/.aws/credentials
+
+    [default]
+    * aws_access_key_id = ************
+    * aws_secret_access_key = ***************
+    * aws_session_token = **************
+</div></code></pre>
+<pre class="hljs"><code><div>➜  ~ nano ~/.aws/config 
+
+    [default]
+    region = eu-central-1
+    output = json
+</div></code></pre>
+<pre class="hljs"><code><div>➜  ~ aws s3 ls              
+    An error occurred (AccessDenied) when calling the ListBuckets operation: Access Denied
+</div></code></pre>
+<p>&quot;puede ser que no tengas permiso al s3 y como los permisos los dan los Adm AWS-UOC cuando crean las cuentas esta edición veo que no les han dado permisos, si puedes ejecutar el get-caller quiere decir que ya te está funcionando...&quot;</p>
+<pre class="hljs"><code><div>➜  ~ aws sts get-caller-identity
+    {
+        <span class="hljs-string">"UserId"</span>: <span class="hljs-string">"AROAIU2Z2ULEWL3JH76BU:arodriguezjus@uoc.edu"</span>,
+        <span class="hljs-string">"Account"</span>: <span class="hljs-string">"579845986493"</span>,
+        <span class="hljs-string">"Arn"</span>: <span class="hljs-string">"arn:aws:sts::579845986493:assumed-role/student/arodriguezjus@uoc.edu"</span>
+    }
+</div></code></pre>
+<p><strong>Instalado Ansible</strong></p>
+<pre class="hljs"><code><div><span class="hljs-comment"># python instalado</span>
+➜  ~ python3 --version
+    Python 3.9.6
+
+<span class="hljs-comment"># pip instaldo</span>
+➜  ~ python3 -m pip -V
+    pip 21.2.4 from /Library/Developer/CommandLineTools/Library/Frameworks/Python3.framework/Versions/3.9/lib/python3.9/site-packages/pip (python 3.9)
+
+<span class="hljs-comment"># Instalar Ansible </span>
+➜  ~ python3 -m pip install --user ansible
+
+➜  ~ nano ~/.zshrc
+    <span class="hljs-comment"># añado esta linea</span>
+    <span class="hljs-built_in">export</span> PATH=<span class="hljs-string">"<span class="hljs-variable">$HOME</span>/Library/Python/3.9/bin:<span class="hljs-variable">$PATH</span>"</span>
+
+<span class="hljs-comment"># recargo archivo configuracino</span>
+➜  ~ <span class="hljs-built_in">source</span> ~/.zshrc
+
+<span class="hljs-comment"># Verificar la instalación de Ansible</span>
+
+➜  ~ ansible --version
+    ansible [core 2.15.12]
+    config file = None
+    configured module search path = [<span class="hljs-string">'/Users/alex/.ansible/plugins/modules'</span>, <span class="hljs-string">'/usr/share/ansible/plugins/modules'</span>]
+    ansible python module location = /Users/alex/Library/Python/3.9/lib/python/site-packages/ansible
+    ansible collection location = /Users/alex/.ansible/collections:/usr/share/ansible/collections
+    executable location = /Users/alex/Library/Python/3.9/bin/ansible
+    python version = 3.9.6 (default, Nov 10 2023, 13:38:27) [Clang 15.0.0 (clang-1500.1.0.2.5)] (/Library/Developer/CommandLineTools/usr/bin/python3)
+    jinja version = 3.1.4
+    libyaml = True
+</div></code></pre>
+<p><strong>Instalando claves</strong></p>
+<pre class="hljs"><code><div><span class="hljs-comment"># Crear un nuevo par de claves</span>
+➜  ~ ssh-keygen -t rsa -b 2048 -f ~/.ssh/alexjust_key
+        Generating public/private rsa key pair.
+        Enter passphrase (empty <span class="hljs-keyword">for</span> no passphrase): 
+        Enter same passphrase again: 
+        Your identification has been saved <span class="hljs-keyword">in</span> /Users/alex/.ssh/alexjust_key
+        Your public key has been saved <span class="hljs-keyword">in</span> /Users/alex/.ssh/alexjust_key.pub
+        The key fingerprint is:
+        SHA256:4WMV+CbjZhoX4E+aJSTU8DE23bjjfIwFcJH9IatXzf0 alex@Alexs-MacBook-Pro.local
+        The key<span class="hljs-string">'s randomart image is:
+        +---[RSA 2048]----+
+        |   .oo*ooB.      |
+        |    .o+=* +..    |
+        |     +...+.+ + . |
+        |      o.Oo= o o .|
+        |       @S@ .    .|
+        |      +.@.+     E|
+        |       * o       |
+        |      .          |
+        |                 |
+        +----[SHA256]-----+
+</span></div></code></pre>
+<pre class="hljs"><code><div><span class="hljs-comment"># clave privada</span>
+➜  ~ chmod 400 ~/.ssh/alexjust_key
+
+<span class="hljs-comment"># clave publica</span>
+➜  ~ chmod 644 ~/.ssh/alexjust_key.pub
+</div></code></pre>
+<p><strong>Importando claves a AWS</strong></p>
+<pre class="hljs"><code><div>➜  ~ aws ec2 import-key-pair --key-name <span class="hljs-string">"alexjust_key"</span> --public-key-material fileb://~/.ssh/alexjust_key.pub
+
+        {
+            <span class="hljs-string">"KeyFingerprint"</span>: <span class="hljs-string">"7a:71:33:1a:ac:dd:52:27:d0:62:de:13:2a:2e:18:52"</span>,
+            <span class="hljs-string">"KeyName"</span>: <span class="hljs-string">"alexjust_key"</span>,
+            <span class="hljs-string">"KeyPairId"</span>: <span class="hljs-string">"key-07c2635213d724f5e"</span>
+        }
+</div></code></pre>
+<p><strong>Creo un grupo de seguridad y permitir el tráfico SSH y HTTP</strong></p>
+<pre class="hljs"><code><div>➜  ~ SECURITY_GROUP_ID=$(aws ec2 create-security-group --group-name <span class="hljs-string">"my-security-group"</span> --description <span class="hljs-string">"My security group"</span> --query <span class="hljs-string">'GroupId'</span> --output text)
+
+<span class="hljs-comment"># Imprime el ID del grupo de seguridad</span>
+➜  ~  <span class="hljs-built_in">echo</span> <span class="hljs-variable">$SECURITY_GROUP_ID</span>
+
+sg-0f60e0c6d509eeb84
+</div></code></pre>
+<pre class="hljs"><code><div><span class="hljs-comment"># abriendo tráfico</span>
+➜  ~ aws ec2 authorize-security-group-ingress --group-id <span class="hljs-variable">$SECURITY_GROUP_ID</span> --protocol tcp --port 22 --cidr 0.0.0.0/0
+➜  ~ aws ec2 authorize-security-group-ingress --group-id <span class="hljs-variable">$SECURITY_GROUP_ID</span> --protocol tcp --port 80 --cidr 0.0.0.0/0
+
+<span class="hljs-comment"># describo las medidas</span>
+➜  ~ aws ec2 describe-security-groups --group-ids sg-0f60e0c6d509eeb84 --query <span class="hljs-string">"SecurityGroups[0].IpPermissions"</span>
+
+[
+    {
+        <span class="hljs-string">"FromPort"</span>: 80,
+        <span class="hljs-string">"IpProtocol"</span>: <span class="hljs-string">"tcp"</span>,
+        <span class="hljs-string">"IpRanges"</span>: [
+            {
+                <span class="hljs-string">"CidrIp"</span>: <span class="hljs-string">"0.0.0.0/0"</span>
+            }
+        ],
+        <span class="hljs-string">"Ipv6Ranges"</span>: [],
+        <span class="hljs-string">"PrefixListIds"</span>: [],
+        <span class="hljs-string">"ToPort"</span>: 80,
+        <span class="hljs-string">"UserIdGroupPairs"</span>: []
+    },
+    {
+        <span class="hljs-string">"FromPort"</span>: 22,
+        <span class="hljs-string">"IpProtocol"</span>: <span class="hljs-string">"tcp"</span>,
+        <span class="hljs-string">"IpRanges"</span>: [
+            {
+                <span class="hljs-string">"CidrIp"</span>: <span class="hljs-string">"0.0.0.0/0"</span>
+            }
+        ],
+        <span class="hljs-string">"Ipv6Ranges"</span>: [],
+        <span class="hljs-string">"PrefixListIds"</span>: [],
+        <span class="hljs-string">"ToPort"</span>: 22,
+        <span class="hljs-string">"UserIdGroupPairs"</span>: []
+    }
+]
+</div></code></pre>
+<p><strong>Instancia EC2 utilizando la nueva clave y el grupo de seguridad</strong></p>
+<pre class="hljs"><code><div><span class="hljs-comment"># AMI específica en la región eu-central-1:</span>
+aws ec2 describe-images --region eu-central-1 --filters <span class="hljs-string">"Name=name,Values=amzn2-ami-hvm-*-x86_64-gp2"</span> --query <span class="hljs-string">"Images[*].[ImageId,Name]"</span> --output text
+
+<span class="hljs-comment">#  lista de subnets disponibles en tu región eu-central-1</span>
+aws ec2 describe-subnets --region eu-central-1 --query <span class="hljs-string">"Subnets[*].SubnetId"</span> --output text
+
+<span class="hljs-comment"># Especifica el ID de la imagen de Amazon Linux 2 (puedes buscar otras AMI si prefieres)</span>
+➜  ~ AMI_ID=ami-0f3d898ae42d775a6
+➜  ~ SUBNET_ID=subnet-0b304df8b3d7ffc22
+
+<span class="hljs-comment"># Lanzar una nueva instancia en la subred especificada</span>
+➜  ~ INSTANCE_ID=$(aws ec2 run-instances --image-id ami-0f3d898ae42d775a6 --instance-type t2.micro --key-name <span class="hljs-string">"alexjust_key"</span> --security-group-ids <span class="hljs-variable">$SECURITY_GROUP_ID</span> --subnet-id subnet-0b304df8b3d7ffc22 --query <span class="hljs-string">'Instances[0].InstanceId'</span> --output text)
+
+        An error occurred (InvalidParameter) when calling the RunInstances operation: 
+        Security group sg-0f60e0c6d509eeb84 and 
+        subnet subnet-0b304df8b3d7ffc22 belong 
+        to different networks.
+</div></code></pre>
+<p>ERROR</p>
+<p><strong>Creo un grupo de seguridad en la misma VPC</strong></p>
+<pre class="hljs"><code><div><span class="hljs-comment"># Verifica la VPC de la subred</span>
+➜  ~ VPC_ID=$(aws ec2 describe-subnets --subnet-ids subnet-0b304df8b3d7ffc22 --query <span class="hljs-string">'Subnets[0].VpcId'</span> --output text)
+
+        <span class="hljs-built_in">echo</span> <span class="hljs-string">"VPC ID de la subred: <span class="hljs-variable">$VPC_ID</span>"</span>
+        VPC ID de la subred: vpc-0dcbbca477c748c31
+
+<span class="hljs-comment"># Crear un nuevo grupo de seguridad en la VPC correcta</span>
+➜  ~ SECURITY_GROUP_ID=$(aws ec2 create-security-group --group-name <span class="hljs-string">"my-security-group"</span> --description <span class="hljs-string">"My security group"</span> --vpc-id <span class="hljs-variable">$VPC_ID</span> --query <span class="hljs-string">'GroupId'</span> --output text)
+
+<span class="hljs-comment"># abriendo tráfico</span>
+➜  ~ aws ec2 authorize-security-group-ingress --group-id <span class="hljs-variable">$SECURITY_GROUP_ID</span> --protocol tcp --port 22 --cidr 0.0.0.0/0
+➜  ~ aws ec2 authorize-security-group-ingress --group-id <span class="hljs-variable">$SECURITY_GROUP_ID</span> --protocol tcp --port 80 --cidr 0.0.0.0/0
+
+
+</div></code></pre>
+<p><strong>Lanzo la instancia EC2</strong></p>
+<pre class="hljs"><code><div><span class="hljs-comment"># Lanzar una nueva instancia en la subred especificada</span>
+➜  ~ INSTANCE_ID=$(aws ec2 run-instances --image-id ami-0f3d898ae42d775a6 --instance-type t2.micro --key-name <span class="hljs-string">"alexjust_key"</span> --security-group-ids <span class="hljs-variable">$SECURITY_GROUP_ID</span> --subnet-id subnet-0b304df8b3d7ffc22 --query <span class="hljs-string">'Instances[0].InstanceId'</span> --output text)
+
+
+<span class="hljs-comment"># Espera hasta que la instancia esté en estado "running"</span>
+➜  ~ aws ec2 <span class="hljs-built_in">wait</span> instance-running --instance-ids <span class="hljs-variable">$INSTANCE_ID</span>
+
+
+<span class="hljs-comment"># Obtener la dirección IP pública de la nueva instancia</span>
+➜  ~ PUBLIC_IP=$(aws ec2 describe-instances --instance-ids <span class="hljs-variable">$INSTANCE_ID</span> --query <span class="hljs-string">'Reservations[0].Instances[0].PublicIpAddress'</span> --output text)
+<span class="hljs-built_in">echo</span> <span class="hljs-string">"La dirección IP pública de la instancia es: <span class="hljs-variable">$PUBLIC_IP</span>"</span>
+
+        La dirección IP pública de la instancia es: 3.75.178.162
+</div></code></pre>
+<p><strong>Configuro Ansible para desplegar Apache2</strong></p>
+<p>Crear un archivo de inventario:</p>
+<ul>
+<li>Creo un archivo llamado hosts y añade la dirección IP pública de tu instancia:</li>
+</ul>
+<pre class="hljs"><code><div>➜  ~ <span class="hljs-built_in">echo</span> <span class="hljs-string">"[webserver]"</span> &gt; hosts
+➜  ~ <span class="hljs-built_in">echo</span> <span class="hljs-string">"<span class="hljs-variable">$PUBLIC_IP</span> ansible_user=ec2-user ansible_ssh_private_key_file=~/.ssh/alexjust_key"</span> &gt;&gt; hosts
+</div></code></pre>
+<p><strong>Creo archivo de playbook de Ansible</strong></p>
+<pre class="hljs"><code><div>➜  ~ nano playbook.yml
+➜  ~ cat playbook.yml 
+
+        ---
+        - hosts: webserver
+        become: yes
+        tasks:
+            - name: Actualizar la lista de paquetes
+            yum:
+                name: <span class="hljs-string">'*'</span>
+                state: latest
+
+            - name: Instalar Apache2
+            yum:
+                name: httpd
+                state: present
+
+            - name: Iniciar el servicio de Apache2
+            service:
+                name: httpd
+                state: started
+                enabled: yes
+
+            - name: Crear una página web de ejemplo
+            copy:
+                content: <span class="hljs-string">"&lt;html&gt;&lt;h1&gt;¡Hola, mundo!&lt;/h1&gt;&lt;/html&gt;"</span>
+                dest: /var/www/html/index.html
+
+</div></code></pre>
+<p><strong>Ejecuto playbook de Ansible</strong></p>
+<pre class="hljs"><code><div>➜  ~ ansible-playbook -i hosts playbook.yml
+
+        PLAY [webserver] *********************************************
+
+        TASK [Gathering Facts] ***************************************
+        The authenticity of host <span class="hljs-string">'3.75.178.162 (3.75.178.162)'</span> can<span class="hljs-string">'t be established.
+        ED25519 key fingerprint is SHA256:Buu1uu55HDk1Q0sv15SrSSGjeVLw8CaGvTSAOxyuoH4.
+        This key is not known by any other names.
+        Are you sure you want to continue connecting (yes/no/[fingerprint])? yes
+        Enter passphrase for key '</span>/Users/alex/.ssh/alexjust_key<span class="hljs-string">': 
+        [WARNING]: Platform linux on host 3.75.178.162 is using the discovered Python interpreter at /usr/bin/python3.7, but future installation of another Python
+        interpreter could change the meaning of that path. See https://docs.ansible.com/ansible-core/2.15/reference_appendices/interpreter_discovery.html for more
+        information.
+        ok: [3.75.178.162]
+
+        TASK [Actualizar la lista de paquetes] **********************
+        changed: [3.75.178.162]
+
+        TASK [Instalar Apache2] *************************************
+        changed: [3.75.178.162]
+
+        TASK [Iniciar el servicio de Apache2] ***********************
+        changed: [3.75.178.162]
+
+        TASK [Crear una página web de ejemplo] **********************
+        changed: [3.75.178.162]
+
+        PLAY RECAP **************************************************
+        3.75.178.162               : ok=5    changed=4    unreachable=0    failed=0    skipped=0    rescued=0    ignored=0   
+</span></div></code></pre>
+<p><strong>HOLA MUNDO</strong></p>
+<pre class="hljs"><code><div>➜  ~ curl http://3.75.178.162/
+
+    &lt;html&gt;&lt;h1&gt;¡Hola, mundo!&lt;/h1&gt;&lt;/html&gt;%  
+</div></code></pre>
+<p><img src="file:///Users/alex/Library/CloudStorage/GoogleDrive-arodriguezjus@uoc.edu/My Drive/1 UOC/00_SEMESTRE/Infraestructuras tecnológicas para Big Data/git/img/39.png" alt=""></p>
+<p><strong>Terminando instancias</strong></p>
+<pre class="hljs"><code><div>➜  ~ aws ec2 terminate-instances --instance-ids <span class="hljs-variable">$INSTANCE_ID</span>
+
+{
+    <span class="hljs-string">"TerminatingInstances"</span>: [
+        {
+            <span class="hljs-string">"CurrentState"</span>: {
+                <span class="hljs-string">"Code"</span>: 32,
+                <span class="hljs-string">"Name"</span>: <span class="hljs-string">"shutting-down"</span>
+            },
+            <span class="hljs-string">"InstanceId"</span>: <span class="hljs-string">"i-050af339f3a0cd6ef"</span>,
+            <span class="hljs-string">"PreviousState"</span>: {
+                <span class="hljs-string">"Code"</span>: 16,
+                <span class="hljs-string">"Name"</span>: <span class="hljs-string">"running"</span>
+            }
+        }
+    ]
+}
+</div></code></pre>
+<p><strong>Eliminando grupos de seguridad</strong></p>
+<pre class="hljs"><code><div>➜  ~ aws ec2 delete-security-group --group-id <span class="hljs-variable">$SECURITY_GROUP_ID</span>  
+</div></code></pre>
+<blockquote style="background-color: #e0f2fe; color: black; border-left: 5px solid #2196f3; padding: 10px;">
+2. Sobre OpenNebula (o AWS) desplegar con Ansible un Stack LAMP (Linux Apache
+Mysql/MariaDB PHP) con los paquetes necesarios y con una p&#xE1;gina de prueba que eval&#xFA;e
+funcionalmente la infraestructura desplegada.
+</blockquote><p>El playbook deberá en grandes apartados hacer:</p>
+<p>a) conectase al host remoto y ejecutar las tareas
+b) Instalar los paquetes necesarios (Apache, Mariadb, php)
+c) Habilitar los servicios HTTP y poner el marcha los servidores (Apache, MariaDB).
+d) Copiar la página de prueba funcional del php (puede ser local o un ejemplo remoto)</p>
+<p>La prueba deberá mostrar todos los pasos y finalmente el acceso y prestaciones de la
+página web desplegada.</p>
+
+<pre class="hljs"><code><div>➜  ~ nano lamp_playbook.yml 
+➜  ~ cat lamp_playbook.yml 
+      ---
+      - name: Deploy LAMP stack on remote host
+        hosts: lamp_servers
+        become: yes
+        vars_files:
+          - vault.yml
+
+        tasks:
+          <span class="hljs-comment"># Asegurar que no hay otros procesos apt en ejecución</span>
+          - name: Ensure no other apt processes are running
+            shell: |
+              pids=$(ps aux | grep -v grep | grep -E <span class="hljs-string">'apt|dpkg'</span> | awk <span class="hljs-string">'{print $2}'</span>)
+              <span class="hljs-keyword">if</span> [ -n <span class="hljs-string">"<span class="hljs-variable">$pids</span>"</span> ]; <span class="hljs-keyword">then</span>
+                <span class="hljs-built_in">kill</span> -9 <span class="hljs-variable">$pids</span>
+              <span class="hljs-keyword">fi</span>
+            ignore_errors: yes
+
+          <span class="hljs-comment"># Asegurar que no hay bloqueos de dpkg presentes</span>
+          - name: Ensure no dpkg locks are present
+            file:
+              path: /var/lib/dpkg/lock-frontend
+              state: absent
+            become: yes
+
+          <span class="hljs-comment"># Asegurar que no hay bloqueos de dpkg presentes (2)</span>
+          - name: Ensure no dpkg locks are present (2)
+            file:
+              path: /var/lib/dpkg/lock
+              state: absent
+            become: yes
+
+          <span class="hljs-comment"># Configurar dpkg en caso de inconsistencias</span>
+          - name: Configure dpkg <span class="hljs-keyword">in</span> <span class="hljs-keyword">case</span> of inconsistencies
+            shell: dpkg --configure -a
+            become: yes
+            ignore_errors: yes
+
+          <span class="hljs-comment"># Actualizar y mejorar los paquetes apt</span>
+          - name: Update and upgrade apt packages
+            apt:
+              update_cache: yes
+              upgrade: dist
+            retries: 5
+            delay: 30
+            register: update_result
+            until: update_result is succeeded
+
+          <span class="hljs-comment"># Preconfigurar la contraseña root de MariaDB</span>
+          - name: Preconfigure MariaDB root password
+            debconf:
+              name: <span class="hljs-string">"mariadb-server"</span>
+              question: <span class="hljs-string">"mysql-server/root_password"</span>
+              value: <span class="hljs-string">"{{ mysql_root_password }}"</span>
+              vtype: <span class="hljs-string">"password"</span>
+
+          <span class="hljs-comment"># Preconfigurar la contraseña root de MariaDB nuevamente</span>
+          - name: Preconfigure MariaDB root password again
+            debconf:
+              name: <span class="hljs-string">"mariadb-server"</span>
+              question: <span class="hljs-string">"mysql-server/root_password_again"</span>
+              value: <span class="hljs-string">"{{ mysql_root_password }}"</span>
+              vtype: <span class="hljs-string">"password"</span>
+
+          <span class="hljs-comment"># Instalar Apache</span>
+          - name: Install Apache
+            apt:
+              name: apache2
+              state: present
+
+          <span class="hljs-comment"># Instalar MySQL/MariaDB</span>
+          - name: Install MySQL/MariaDB
+            apt:
+              name: mariadb-server
+              state: present
+
+          <span class="hljs-comment"># Instalar PHP y módulos</span>
+          - name: Install PHP and modules
+            apt:
+              name:
+                - php
+                - php-mysql
+                - libapache2-mod-php
+              state: present
+
+          <span class="hljs-comment"># Iniciar y habilitar el servicio Apache</span>
+          - name: Start and <span class="hljs-built_in">enable</span> Apache service
+            service:
+              name: apache2
+              state: started
+              enabled: yes
+
+          <span class="hljs-comment"># Iniciar y habilitar el servicio MariaDB</span>
+          - name: Start and <span class="hljs-built_in">enable</span> MariaDB service
+            service:
+              name: mariadb
+              state: started
+              enabled: yes
+
+          <span class="hljs-comment"># Establecer la contraseña root para MariaDB</span>
+          - name: Set root password <span class="hljs-keyword">for</span> MariaDB
+            community.mysql.mysql_user:
+              name: root
+              host: localhost
+              password: <span class="hljs-string">"{{ mysql_root_password }}"</span>
+              login_user: root
+              login_password: <span class="hljs-string">"{{ mysql_root_password }}"</span>
+              state: present
+              check_implicit_admin: <span class="hljs-literal">true</span>
+
+          <span class="hljs-comment"># Eliminar usuarios anónimos</span>
+          - name: Remove anonymous users
+            mysql_user:
+              name: <span class="hljs-string">''</span>
+              host_all: <span class="hljs-literal">true</span>
+              state: absent
+              login_user: root
+              login_password: <span class="hljs-string">"{{ mysql_root_password }}"</span>
+
+          <span class="hljs-comment"># Deshabilitar el inicio de sesión root de forma remota</span>
+          - name: Disallow root login remotely
+            mysql_user:
+              name: root
+              host: <span class="hljs-string">'%'</span>
+              state: absent
+              login_user: root
+              login_password: <span class="hljs-string">"{{ mysql_root_password }}"</span>
+
+          <span class="hljs-comment"># Eliminar la base de datos de prueba</span>
+          - name: Remove <span class="hljs-built_in">test</span> database
+            mysql_db:
+              name: <span class="hljs-built_in">test</span>
+              state: absent
+              login_user: root
+              login_password: <span class="hljs-string">"{{ mysql_root_password }}"</span>
+
+          <span class="hljs-comment"># Recargar las tablas de privilegios</span>
+          - name: Reload privilege tables
+            mysql_query:
+              query: <span class="hljs-string">"FLUSH PRIVILEGES;"</span>
+              login_user: root
+              login_password: <span class="hljs-string">"{{ mysql_root_password }}"</span>
+
+          <span class="hljs-comment"># Crear una base de datos MySQL</span>
+          - name: Create a MySQL database
+            community.mysql.mysql_db:
+              name: test_db
+              state: present
+              login_user: root
+              login_password: <span class="hljs-string">"{{ mysql_root_password }}"</span>
+
+          <span class="hljs-comment"># Crear un usuario MySQL con privilegios</span>
+          - name: Create a MySQL user with privileges
+            community.mysql.mysql_user:
+              name: test_user
+              password: <span class="hljs-string">"{{ mysql_user_password }}"</span>
+              priv: <span class="hljs-string">'test_db.*:ALL'</span>
+              state: present
+              login_user: root
+              login_password: <span class="hljs-string">"{{ mysql_root_password }}"</span>
+
+          <span class="hljs-comment"># Copiar una página de prueba PHP</span>
+          - name: Copy PHP <span class="hljs-built_in">test</span> page
+            copy:
+              content: |
+                &lt;?php
+                phpinfo();
+                ?&gt;
+              dest: /var/www/html/info.php
+              owner: www-data
+              group: www-data
+              mode: <span class="hljs-string">'0644'</span>
+
+          <span class="hljs-comment"># Asegurar que Apache está en ejecución</span>
+          - name: Ensure Apache is running
+            service:
+              name: apache2
+              state: started
+
+          <span class="hljs-comment"># Asegurar que MariaDB está en ejecución</span>
+          - name: Ensure MariaDB is running
+            service:
+              name: mariadb
+              state: started
+
+</div></code></pre>
+<p><strong>Creando credenciales MySQL, MariaDB</strong></p>
+<pre class="hljs"><code><div>➜  ~ nano vault.yml
+➜  ~ cat vault.yml
+
+    mysql_root_password: <span class="hljs-string">'root_password_here'</span>
+    mysql_user_password: <span class="hljs-string">'user_password_here'</span>
+</div></code></pre>
+<p><strong>Encriptando</strong></p>
+<pre class="hljs"><code><div>➜  ~ ansible-vault encrypt vault.yml
+
+    New Vault password: 
+    Confirm New Vault password: 
+    Encryption successful
+</div></code></pre>
+<p><strong>Inventario</strong></p>
+<pre class="hljs"><code><div>➜  ~ nano hosts.ini 
+➜  ~ cat hosts.ini 
+
+    [lamp_servers]
+    master.hadoop.local ansible_host=84.88.58.69 ansible_user=root ansible_ssh_private_key_file=~/.ssh/id_rsa ansible_port=55000
+</div></code></pre>
+<p><strong>Instalar la colección community.mysql:</strong></p>
+<pre class="hljs"><code><div>➜  ~ ansible-galaxy collection install community.mysql
+
+      Starting galaxy collection install process
+      Nothing to <span class="hljs-keyword">do</span>. All requested collections are already installed. If you want to reinstall them, consider using `--force`.
+</div></code></pre>
+<p><strong>Ejecutando</strong></p>
+<pre class="hljs"><code><div>➜  ~ ansible-playbook -i hosts.ini lamp_playbook.yml --ask-vault-pass -vvv
+
+      ...
+      ...
+      ...
+
+      PLAY RECAP *****************************************************************************
+      master.hadoop.local        : ok=23   changed=9    unreachable=0    failed=0    skipped=0    rescued=0    ignored=0   
+</div></code></pre>
+<p><strong>http://84.88.58.69/info.php</strong></p>
+<p><img src="file:///Users/alex/Library/CloudStorage/GoogleDrive-arodriguezjus@uoc.edu/My Drive/1 UOC/00_SEMESTRE/Infraestructuras tecnológicas para Big Data/git/img/33.png" alt=""></p>
+<p><strong>http://84.88.58.69/test_db.php</strong></p>
+<p><img src="file:///Users/alex/Library/CloudStorage/GoogleDrive-arodriguezjus@uoc.edu/My Drive/1 UOC/00_SEMESTRE/Infraestructuras tecnológicas para Big Data/git/img/34.png" alt=""></p>
+<blockquote style="background-color: #e0f2fe; color: black; border-left: 5px solid #2196f3; padding: 10px;">
+3. Utilizar Vagrant y como provider Virtualbox (sobre la m&#xE1;quina local o sobre una MV en
+OpenNebula) para crear mediante Apache un Sitio-web. Para desplegarlo se utilizar&#xE1; un
+playbook (Ansible) que deber&#xE1; configurar el site para que tenga una p&#xE1;gina principal
+/var/www/html y un directorio privado /var/www/html/secure/ al que se podr&#xE1; acceder
+con usuario y passwd.
+</blockquote>
+<p>Cómo Funciona Vagrant con VirtualBox?</p>
+<p>Cuando usas Vagrant para crear y gestionar una máquina virtual, Vagrant automatiza muchos de los pasos que normalmente harías manualmente en VirtualBox. Esto incluye:</p>
+<ul>
+<li>Descargar la imagen (box) de Ubuntu especificada en el Vagrantfile.</li>
+<li>Crear y configurar una máquina virtual en VirtualBox.</li>
+<li>Provisionar la máquina virtual con herramientas como Ansible, para configurar software y servicios en la máquina virtual.</li>
+</ul>
+<p><strong>Instalo Vagrant</strong></p>
+<pre class="hljs"><code><div>brew tap hashicorp/tap
+brew install hashicorp/tap/hashicorp-vagrant
+</div></code></pre>
+<p><strong>Configuro el Vagrantfile</strong></p>
+<pre class="hljs"><code><div>➜  cat Vagrantfile 
+
+    Vagrant.configure(<span class="hljs-string">"2"</span>) <span class="hljs-keyword">do</span> |config|
+    config.vm.box = <span class="hljs-string">"ubuntu/focal64"</span>  <span class="hljs-comment"># Especificación de la caja de Ubuntu</span>
+    config.vm.network <span class="hljs-string">"forwarded_port"</span>, guest: 80, host: 8080 <span class="hljs-comment"># Configuración del reenvío de puertos</span>
+
+    config.vm.provider <span class="hljs-string">"virtualbox"</span> <span class="hljs-keyword">do</span> |vb| <span class="hljs-comment"># Configuración del proveedor VirtualBox en este caso</span>
+        vb.name = <span class="hljs-string">"Ubuntu-24.04"</span>  
+        vb.customize [<span class="hljs-string">"modifyvm"</span>, :id, <span class="hljs-string">"--memory"</span>, <span class="hljs-string">"2048"</span>]
+        vb.customize [<span class="hljs-string">"modifyvm"</span>, :id, <span class="hljs-string">"--cpus"</span>, <span class="hljs-string">"2"</span>]
+    end
+
+    config.vm.provision <span class="hljs-string">"ansible_local"</span> <span class="hljs-keyword">do</span> |ansible| <span class="hljs-comment"># Provisionamiento usando Ansible</span>
+        ansible.playbook = <span class="hljs-string">"playbook.yml"</span>
+    end
+    end
+</div></code></pre>
+<p><strong>Creo Playbook de Ansible para el sitio web</strong></p>
+<pre class="hljs"><code><div>➜  cat playbook.yml
+
+    ---
+    - hosts: all
+      become: yes
+
+      tasks:
+        <span class="hljs-comment"># Instalación de Apache y otros paquetes necesarios</span>
+        - name: Instalar Apache 
+          apt:
+            name: apache2
+            state: present
+            update_cache: yes
+
+        - name: Instalar pip y passlib
+          apt:
+            name: <span class="hljs-string">"{{ item }}"</span>
+            state: present
+          with_items:
+            - python3-pip
+            - python3-passlib
+
+        <span class="hljs-comment"># Creación de directorios y páginas HTML</span>
+        - name: Crear directorios para el sitio web 
+          file:
+            path: <span class="hljs-string">"{{ item }}"</span>
+            state: directory
+          with_items:
+            - /var/www/html
+            - /var/www/html/secure
+
+        - name: Crear página principal
+          copy:
+            dest: /var/www/html/index.html
+            content: <span class="hljs-string">"&lt;h1&gt;Bienvenido a la página principal&lt;/h1&gt;"</span>
+
+        - name: Crear página privada
+          copy:
+            dest: /var/www/html/secure/index.html
+            content: <span class="hljs-string">"&lt;h1&gt;Bienvenido a la página privada&lt;/h1&gt;"</span>
+
+        - name: Crear archivo de configuración para el directorio seguro si no existe
+          file:
+            path: /etc/apache2/conf-available/secure.conf
+            state: touch
+        
+        <span class="hljs-comment"># Configuración del directorio seguro con autenticación básica</span>
+        - name: Configurar autenticación para el directorio privado
+          blockinfile:
+            path: /etc/apache2/conf-available/secure.conf
+            block: |
+              &lt;Directory /var/www/html/secure&gt;
+                  AuthType Basic
+                  AuthName <span class="hljs-string">"Restricted Content"</span>
+                  AuthUserFile /etc/apache2/.htpasswd
+                  Require valid-user
+              &lt;/Directory&gt;
+
+        <span class="hljs-comment"># Creación de un usuario para autenticación básica</span>
+        - name: Crear usuario para autenticación básica
+          community.general.htpasswd:
+            path: /etc/apache2/.htpasswd
+            name: usuario
+            password: passwd
+
+        <span class="hljs-comment"># Habilitación y reinicio de Apache</span>
+        - name: Habilitar el sitio seguro
+          shell: a2enconf secure
+
+        - name: Reiniciar Apache
+          service:
+            name: apache2
+            state: restarted
+</div></code></pre>
+<p><strong>Conexión de Vagrant</strong></p>
+<ul>
+<li>Conectar a la VM: Vagrant se conectará a la máquina virtual que ya está corriendo.</li>
+<li>Ejecutar el provisionador: Vagrant ejecutará Ansible localmente dentro de la VM para ejecutar el playbook playbook.yml.</li>
+</ul>
+<p>Nota :</p>
+<ul>
+<li>Si necesitas reiniciar la VM y volver a aplicar la provisión en un estado limpio, puedes utilizar :
+<ul>
+<li><code>vagrant destroy -f</code></li>
+<li><code>vagrant up</code></li>
+</ul>
+</li>
+</ul>
+<pre class="hljs"><code><div>➜  vagrant provision
+
+    ==&gt; default: Running provisioner: ansible_local...
+        default: Running ansible-playbook...
+
+        PLAY [all] *********************************************************************
+
+        TASK [Gathering Facts] *********************************************************
+        ok: [default]
+
+        TASK [Instalar Apache] *********************************************************
+        ok: [default]
+
+        TASK [Instalar pip y passlib] **************************************************
+        changed: [default] =&gt; (item=python3-pip)
+        changed: [default] =&gt; (item=python3-passlib)
+
+        TASK [Crear directorios para el sitio web] *************************************
+        ok: [default] =&gt; (item=/var/www/html)
+        ok: [default] =&gt; (item=/var/www/html/secure)
+
+        TASK [Crear página principal] **************************************************
+        ok: [default]
+
+        TASK [Crear página privada] ****************************************************
+        ok: [default]
+
+        TASK [Crear archivo de configuración para el directorio seguro si no existe] ***
+        changed: [default]
+
+        TASK [Configurar autenticación para el directorio privado] *********************
+        ok: [default]
+
+        TASK [Crear usuario para autenticación básica] *********************************
+        changed: [default]
+
+        TASK [Habilitar el sitio seguro] ***********************************************
+        changed: [default]
+
+        TASK [Reiniciar Apache] ********************************************************
+        changed: [default]
+
+        PLAY RECAP *********************************************************************
+        default  : ok=11   changed=5    unreachable=0    failed=0    skipped=0    rescued=0    ignored=0   
+</div></code></pre>
+<p><strong>Comprovaciones</strong></p>
+<pre class="hljs"><code><div>➜  vagrant status
+
+    Current machine states:
+
+    default                   running (virtualbox)
+
+    The VM is running. To stop this VM, you can run `vagrant halt` to
+    shut it down forcefully, or you can run `vagrant <span class="hljs-built_in">suspend</span>` to simply
+    <span class="hljs-built_in">suspend</span> the virtual machine. In either <span class="hljs-keyword">case</span>, to restart it again,
+    simply run `vagrant up`.
+</div></code></pre>
+<p><strong>Acceder a la máquina virtual mediante SSH</strong></p>
+<pre class="hljs"><code><div>➜  vagrant ssh            
+
+    Welcome to Ubuntu 20.04.6 LTS (GNU/Linux 5.4.0-182-generic x86_64)
+
+    * Documentation:  https://help.ubuntu.com
+    * Management:     https://landscape.canonical.com
+    * Support:        https://ubuntu.com/pro
+
+    System information as of Wed Jun 12 10:59:06 UTC 2024
+
+    System load:  0.08              Processes:               127
+    Usage of /:   6.2% of 38.70GB   Users logged <span class="hljs-keyword">in</span>:         0
+    Memory usage: 19%               IPv4 address <span class="hljs-keyword">for</span> enp0s3: 10.0.2.15
+    Swap usage:   0%
+
+
+    Expanded Security Maintenance <span class="hljs-keyword">for</span> Applications is not enabled.
+
+    8 updates can be applied immediately.
+    To see these additional updates run: apt list --upgradable
+
+    1 additional security update can be applied with ESM Apps.
+    Learn more about enabling ESM Apps service at https://ubuntu.com/esm
+
+    New release <span class="hljs-string">'22.04.3 LTS'</span> available.
+    Run <span class="hljs-string">'do-release-upgrade'</span> to upgrade to it.
+</div></code></pre>
+<p><strong>Status apache en MV y verifico los servicios en la máquina virtual</strong></p>
+<pre class="hljs"><code><div>vagrant@ubuntu-focal:~$ sudo systemctl status apache2
+
+    ● apache2.service - The Apache HTTP Server
+        Loaded: loaded (/lib/systemd/system/apache2.service; enabled; vendor preset: enabled)
+        Active: active (running) since Wed 2024-06-12 10:52:28 UTC; 6min ago
+        Docs: https://httpd.apache.org/docs/2.4/
+        Process: 13166 ExecStart=/usr/sbin/apachectl start (code=exited, status=0/SUCCESS)
+    Main PID: 13184 (apache2)
+        Tasks: 55 (<span class="hljs-built_in">limit</span>: 2324)
+        Memory: 5.7M
+        CGroup: /system.slice/apache2.service
+                ├─13184 /usr/sbin/apache2 -k start
+                ├─13185 /usr/sbin/apache2 -k start
+                └─13186 /usr/sbin/apache2 -k start
+
+    Jun 12 10:52:28 ubuntu-focal systemd[1]: Starting The Apache HTTP Server...
+    Jun 12 10:52:28 ubuntu-focal apachectl[13183]: AH00558: apache2: Could not reliably determine the server<span class="hljs-string">'s fully qualified domain name, u&gt;
+    Jun 12 10:52:28 ubuntu-focal systemd[1]: Started The Apache HTTP Server.
+</span></div></code></pre>
+<p><strong>Navegando por el sistema de archivos</strong></p>
+<pre class="hljs"><code><div>vagrant@ubuntu-focal:~$ ls /var/www/html
+    index.html  secure
+</div></code></pre>
+<p>Desde navegador local</p>
+<p><img src="file:///Users/alex/Library/CloudStorage/GoogleDrive-arodriguezjus@uoc.edu/My Drive/1 UOC/00_SEMESTRE/Infraestructuras tecnológicas para Big Data/git/03_Despliegue_de_IaC/..../img/35.png" alt=""></p>
+<pre class="hljs"><code><div>vagrant@ubuntu-focal:~$ cat /var/www/html/index.html
+
+    &lt;h1&gt;Bienvenido a la página principal&lt;/h1&gt;
+</div></code></pre>
+<p>desde navegador local</p>
+<p><img src="file:///Users/alex/Library/CloudStorage/GoogleDrive-arodriguezjus@uoc.edu/My Drive/1 UOC/00_SEMESTRE/Infraestructuras tecnológicas para Big Data/git/img/36.png" alt=""></p>
+<pre class="hljs"><code><div>vagrant@ubuntu-focal:~$ cat /var/www/html/secure/index.html
+
+    &lt;h1&gt;Bienvenido a la página privada&lt;/h1&gt;
+</div></code></pre>
+<p>desde navegador local</p>
+<p><img src="file:///Users/alex/Library/CloudStorage/GoogleDrive-arodriguezjus@uoc.edu/My Drive/1 UOC/00_SEMESTRE/Infraestructuras tecnológicas para Big Data/git/img/37.png" alt=""></p>
+<blockquote style="background-color: #e0f2fe; color: black; border-left: 5px solid #2196f3; padding: 10px;">
+4. Utilizando Terraform y como provider Docker, desplegar un reverse proxy. Mostrar
+funcionalidad y analizar todos los pasos de aprovisionamiento, funcionalidad y
+eliminaci&#xF3;n del recurso.
+</blockquote>
+<p><strong>Instalo Terraform y Docker</strong></p>
+<p>Instalamos Terraform, una herramienta para construir, cambiar y versionar la infraestructura de manera segura y eficiente. Docker también debe estar instalado para manejar contenedores.</p>
+<pre class="hljs"><code><div>➜  ~ brew tap hashicorp/tap
+➜  ~ brew install hashicorp/tap/terraform
+</div></code></pre>
+<p><strong>Configuro el Archivo main.tf de Terraform</strong></p>
+<pre class="hljs"><code><div>➜  ~ mkdir terraform-reverse-proxy
+➜  ~ <span class="hljs-built_in">cd</span> terraform-reverse-proxy
+➜  terraform-reverse-proxy nano main.tf
+➜  terraform-reverse-proxy cat main.tf
+➜  terraform-reverse-proxy cat main.tf 
+
+      terraform {
+        required_providers {
+          docker = {
+            <span class="hljs-built_in">source</span>  = <span class="hljs-string">"kreuzwerker/docker"</span>
+            version = <span class="hljs-string">"~&gt; 2.15.0"</span>
+          }
+        }
+      }
+
+      provider <span class="hljs-string">"docker"</span> {
+        host = <span class="hljs-string">"unix:///var/run/docker.sock"</span>
+      }
+
+      resource <span class="hljs-string">"docker_image"</span> <span class="hljs-string">"nginx"</span> {
+        name = <span class="hljs-string">"nginx:latest"</span>
+      }
+
+      resource <span class="hljs-string">"docker_container"</span> <span class="hljs-string">"nginx"</span> {
+        image = docker_image.nginx.latest
+        name  = <span class="hljs-string">"reverse-proxy"</span>
+        ports {
+          internal = 80
+          external = 8080
+        }
+      }
+
+      output <span class="hljs-string">"nginx_container_id"</span> {
+        value = docker_container.nginx.id
+      }
+
+</div></code></pre>
+<ul>
+<li>Se especifica el proveedor de Docker para Terraform.</li>
+<li>Se descarga la imagen nginx:latest.</li>
+<li>Se configura un contenedor Docker basado en esa imagen, exponiendo el puerto 80 del contenedor al puerto 8080 del host.</li>
+<li>Se produce un output con el ID del contenedor.</li>
+</ul>
+<p><strong>Inicializar y Aplicar Terraform</strong></p>
+<p>Inicializo el directorio de trabajo que contiene los archivos de configuración de Terraform. Descarga el proveedor especificado y prepara el entorno.</p>
+<pre class="hljs"><code><div>➜  terraform-reverse-proxy terraform init
+
+        Initializing the backend...
+
+        Initializing provider plugins...
+        - Finding kreuzwerker/docker versions matching <span class="hljs-string">"~&gt; 2.15.0"</span>...
+        - Finding latest version of hashicorp/<span class="hljs-built_in">local</span>...
+        - Installing kreuzwerker/docker v2.15.0...
+        - Installed kreuzwerker/docker v2.15.0 (self-signed, key ID BD080C4571C6104C)
+        - Installing hashicorp/<span class="hljs-built_in">local</span> v2.5.1...
+        - Installed hashicorp/<span class="hljs-built_in">local</span> v2.5.1 (signed by HashiCorp)
+
+        Partner and community providers are signed by their developers.
+        If you<span class="hljs-string">'d like to know more about provider signing, you can read about it here:
+        https://www.terraform.io/docs/cli/plugins/signing.html
+
+        Terraform has created a lock file .terraform.lock.hcl to record the provider
+        selections it made above. Include this file in your version control repository
+        so that Terraform can guarantee to make the same selections by default when
+        you run "terraform init" in the future.
+
+        Terraform has been successfully initialized!
+
+        You may now begin working with Terraform. Try running "terraform plan" to see
+        any changes that are required for your infrastructure. All Terraform commands
+        should now work.
+
+        If you ever set or change modules or backend configuration for Terraform,
+        rerun this command to reinitialize your working directory. If you forget, other
+        commands will detect it and remind you to do so if necessary.
+</span></div></code></pre>
+<p><strong>Despliegue</strong></p>
+<p>Aplico la configuración especificada en main.tf. Terraform crea el contenedor de Docker según la definición, mapea los puertos y despliega Nginx.</p>
+<pre class="hljs"><code><div>➜  terraform-reverse-proxy terraform apply
+
+
+    Terraform used the selected providers to generate the following execution plan. Resource actions are indicated with the following symbols:
+      + create
+
+    Terraform will perform the following actions:
+
+      <span class="hljs-comment"># docker_container.nginx will be created</span>
+      + resource <span class="hljs-string">"docker_container"</span> <span class="hljs-string">"nginx"</span> {
+          + attach           = <span class="hljs-literal">false</span>
+          + bridge           = (known after apply)
+          + <span class="hljs-built_in">command</span>          = (known after apply)
+          + container_logs   = (known after apply)
+
+    Do you want to perform these actions?
+
+      Enter a value: yes
+
+    docker_image.nginx: Creating...
+    local_file.nginx_conf: Creating...
+    local_file.nginx_conf: Creation complete after 0s [id=04d54a11c45eb38330a4780589e2aa198b546439]
+    docker_image.nginx: Still creating... [10s elapsed]
+    docker_image.nginx: Creation complete after 14s [id=sha256:4f67c83422ec747235357c04556616234e66fc3fa39cb4f40b2d4441ddd8f100nginx:latest]
+    docker_container.nginx: Creating...
+    docker_container.nginx: Creation complete after 0s [id=51f6d2921664c6fd32c7e1cb0504b7cf9b91e93756750d8c2294f7f496c87fa1]
+
+    Apply complete! Resources: 3 added, 0 changed, 0 destroyed.
+</div></code></pre>
+<p><strong>Verificar el Despliegue</strong></p>
+<pre class="hljs"><code><div>➜  terraform-reverse-proxy docker ps
+
+CONTAINER ID   IMAGE                COMMAND                  CREATED              STATUS                          PORTS                  NAMES
+51f6d2921664   nginx:latest         <span class="hljs-string">"/docker-entrypoint.…"</span>   About a minute ago   Up About a minute               0.0.0.0:8080-&gt;80/tcp   nginx_reverse_proxy
+477fa408db2c   parse-web15:latest   <span class="hljs-string">"docker-entrypoint.s…"</span>   3 months ago         Restarting (1) 45 seconds ago                          parse
+0fc84e39d58a   mongo:7-jammy        <span class="hljs-string">"docker-entrypoint.s…"</span>   3 months ago         Up 2 minutes                    27017/tcp              mongodb
+</div></code></pre>
+<pre class="hljs"><code><div>➜  terraform-reverse-proxy curl http://localhost:8080
+
+    &lt;!DOCTYPE html&gt;
+    &lt;html&gt;
+    &lt;head&gt;
+      &lt;title&gt;Welcome to nginx!&lt;/title&gt;
+        &lt;style&gt;
+          html { color-scheme: light dark; }
+          body { width: 35em; margin: 0 auto;
+          font-family: Tahoma, Verdana, Arial, sans-serif; }
+        &lt;/style&gt;
+    &lt;/head&gt;
+    &lt;body&gt;
+      &lt;h1&gt;Welcome to nginx!&lt;/h1&gt;
+      &lt;p&gt;If you see this page, the nginx web server is successfully installed and
+      working. Further configuration is required.&lt;/p&gt;
+
+      &lt;p&gt;For online documentation and support please refer to
+      &lt;a href=<span class="hljs-string">"http://nginx.org/"</span>&gt;nginx.org&lt;/a&gt;.&lt;br/&gt;
+        Commercial support is available at
+      &lt;a href=<span class="hljs-string">"http://nginx.com/"</span>&gt;nginx.com&lt;/a&gt;.&lt;/p&gt;
+
+      &lt;p&gt;&lt;em&gt;Thank you <span class="hljs-keyword">for</span> using nginx.&lt;/em&gt;&lt;/p&gt;
+    &lt;/body&gt;
+    &lt;/html&gt;
+</div></code></pre>
+<p>Análisis:</p>
+<ul>
+<li>docker ps lista los contenedores en ejecución, verificando que el contenedor nginx está activo y mapeado correctamente.</li>
+<li>curl http://localhost:8080 verifica que Nginx está sirviendo la página de bienvenida, confirmando que el reverse proxy está funcionando correctamente.</li>
+</ul>
+<p><img src="file:///Users/alex/Library/CloudStorage/GoogleDrive-arodriguezjus@uoc.edu/My Drive/1 UOC/00_SEMESTRE/Infraestructuras tecnológicas para Big Data/git/img/38.png" alt=""></p>
+<p><strong>Eliminación del recurso</strong></p>
+<pre class="hljs"><code><div>
+➜  terraform-reverse-proxy terraform destroy         
+
+  docker_image.nginx: Refreshing state... [id=sha256:4f67c83422ec747235357c04556616234e66fc3fa39cb4f40b2d4441ddd8f100nginx:latest]
+  docker_container.nginx: Refreshing state... [id=3d724fee5a946bd3d2ad98ade2401cd85c09fe1b6d9cb22cef5e5fe6fe3f5d0a]
+
+  Terraform used the selected providers to generate the following execution plan. Resource actions are indicated with the following symbols:
+    - destroy
+
+  Terraform will perform the following actions:
+
+    <span class="hljs-comment"># docker_container.nginx will be destroyed</span>
+    - resource <span class="hljs-string">"docker_container"</span> <span class="hljs-string">"nginx"</span> {
+
+  Do you really want to destroy all resources?
+    Terraform will destroy all your managed infrastructure, as shown above.
+    There is no undo. Only <span class="hljs-string">'yes'</span> will be accepted to confirm.
+
+    Enter a value: yes
+
+  docker_container.nginx: Destroying... [id=3d724fee5a946bd3d2ad98ade2401cd85c09fe1b6d9cb22cef5e5fe6fe3f5d0a]
+  docker_container.nginx: Destruction complete after 0s
+  docker_image.nginx: Destroying... [id=sha256:4f67c83422ec747235357c04556616234e66fc3fa39cb4f40b2d4441ddd8f100nginx:latest]
+  docker_image.nginx: Destruction complete after 1s
+
+  Destroy complete! Resources: 2 destroyed.
+</div></code></pre>
+<p>Limpiar los recursos para evitar costos innecesarios y mantener el entorno limpio <img class="emoji" alt="smiley" src="data:image/png;base64,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" /></p>
+<blockquote style="background-color: #e0f2fe; color: black; border-left: 5px solid #2196f3; padding: 10px;">
+5. Utilizando Terraform y como provider AWS desplegar 2 instancias sobre EC2 (utilizar
+instancias peque&#xF1;as). Mostrar funcionalidad y analizar todos los pasos de
+aprovisionamiento, funcionalidad y eliminaci&#xF3;n del recurso.
+</blockquote>
+<pre class="hljs"><code><div>➜  terraform-ec2 nano main.tf
+➜  terraform-ec2 cat main.tf 
+
+      <span class="hljs-comment"># Proveedor de AWS</span>
+      provider <span class="hljs-string">"aws"</span> {
+        region = <span class="hljs-string">"eu-central-1"</span>
+      }
+
+      <span class="hljs-comment"># Crear un par de claves</span>
+      resource <span class="hljs-string">"aws_key_pair"</span> <span class="hljs-string">"example"</span> {
+        key_name   = <span class="hljs-string">"example-key"</span>
+        public_key = file(<span class="hljs-string">"~/.ssh/alexjust_key.pub"</span>)
+      }
+
+      <span class="hljs-comment"># Crear un grupo de seguridad que permite tráfico SSH y HTTP</span>
+      resource <span class="hljs-string">"aws_security_group"</span> <span class="hljs-string">"allow_ssh_http"</span> {
+        name_prefix = <span class="hljs-string">"allow_ssh_http"</span>
+
+        <span class="hljs-comment"># Permitir tráfico SSH (puerto 22)</span>
+        ingress {
+          description = <span class="hljs-string">"SSH"</span>
+          from_port   = 22
+          to_port     = 22
+          protocol    = <span class="hljs-string">"tcp"</span>
+          cidr_blocks = [<span class="hljs-string">"0.0.0.0/0"</span>]
+        }
+
+        <span class="hljs-comment"># Permitir tráfico HTTP (puerto 80)</span>
+        ingress {
+          description = <span class="hljs-string">"HTTP"</span>
+          from_port   = 80
+          to_port     = 80
+          protocol    = <span class="hljs-string">"tcp"</span>
+          cidr_blocks = [<span class="hljs-string">"0.0.0.0/0"</span>]
+        }
+
+        <span class="hljs-comment"># Permitir todo el tráfico de salida</span>
+        egress {
+          from_port   = 0
+          to_port     = 0
+          protocol    = <span class="hljs-string">"-1"</span>
+          cidr_blocks = [<span class="hljs-string">"0.0.0.0/0"</span>]
+        }
+      }
+
+      <span class="hljs-comment"># Crear instancias EC2</span>
+      resource <span class="hljs-string">"aws_instance"</span> <span class="hljs-string">"web"</span> {
+        count         = 2
+        ami           = <span class="hljs-string">"ami-0f3d898ae42d775a6"</span>
+        instance_type = <span class="hljs-string">"t2.micro"</span>
+        key_name      = aws_key_pair.example.key_name
+        security_groups = [aws_security_group.allow_ssh_http.name]
+
+        tags = {
+          Name = <span class="hljs-string">"Terraform-EC2-Web-<span class="hljs-variable">${count.index}</span>"</span>
+        }
+      }
+
+      <span class="hljs-comment"># Salida de las direcciones IP públicas de las instancias</span>
+      output <span class="hljs-string">"instance_ips"</span> {
+        value = aws_instance.web[*].public_ip
+      }
+</div></code></pre>
+<pre class="hljs"><code><div><span class="hljs-comment"># Inicializar Terraform</span>
+➜  terraform-ec2 terraform init
+
+      Initializing the backend...
+
+      Initializing provider plugins...
+      - Finding latest version of hashicorp/aws...
+      - Installing hashicorp/aws v5.53.0...
+      - Installed hashicorp/aws v5.53.0 (signed by HashiCorp)
+
+      Terraform has created a lock file .terraform.lock.hcl to record the provider
+      selections it made above. Include this file <span class="hljs-keyword">in</span> your version control repository
+      so that Terraform can guarantee to make the same selections by default when
+      you run <span class="hljs-string">"terraform init"</span> <span class="hljs-keyword">in</span> the future.
+
+      Terraform has been successfully initialized!
+
+      You may now begin working with Terraform. Try running <span class="hljs-string">"terraform plan"</span> to see
+      any changes that are required <span class="hljs-keyword">for</span> your infrastructure. All Terraform commands
+      should now work.
+
+      If you ever <span class="hljs-built_in">set</span> or change modules or backend configuration <span class="hljs-keyword">for</span> Terraform,
+      rerun this <span class="hljs-built_in">command</span> to reinitialize your working directory. If you forget, other
+      commands will detect it and remind you to <span class="hljs-keyword">do</span> so <span class="hljs-keyword">if</span> necessary.
+</div></code></pre>
+<p>El comando plan te muestra lo que Terraform va a crear, modificar o destruir</p>
+<pre class="hljs"><code><div><span class="hljs-comment"># Planificar la infraestructura</span>
+➜  terraform-ec2 terraform plan
+
+
+  Terraform used the selected providers to generate the following execution plan. Resource actions are indicated with the following symbols:
+    + create
+
+  Terraform will perform the following actions:
+  ...
+  ...
+  ...
+
+<span class="hljs-comment"># Aplicar la configuración</span>
+➜  terraform apply
+
+      aws_instance.web[1]: Creating...
+      ╷
+      │ Error: creating EC2 Instance: InvalidParameter: Security group sg-023e2e07307dc1e62 and subnet subnet-0b304df8b3d7ffc22 belong to different networks.
+      │ 	status code: 400, request id: 65c01330-b901-4664-a087-49df46624aa4
+      │ 
+      │   with aws_instance.web[1],
+      │   on main.tf line 37, <span class="hljs-keyword">in</span> resource <span class="hljs-string">"aws_instance"</span> <span class="hljs-string">"web"</span>:
+      │   37: resource <span class="hljs-string">"aws_instance"</span> <span class="hljs-string">"web"</span> {
+      │ 
+      ╵
+</div></code></pre>
+<pre class="hljs"><code><div>➜  terraform-ec2 aws ec2 describe-subnets --subnet-ids subnet-0b304df8b3d7ffc22 --query <span class="hljs-string">'Subnets[0].VpcId'</span> --output text
+
+
+      vpc-0dcbbca477c748c31
+
+</div></code></pre>
+<pre class="hljs"><code><div>➜  terraform-ec2 cat main.tf 
+
+      provider <span class="hljs-string">"aws"</span> {
+        region = <span class="hljs-string">"eu-central-1"</span>
+      }
+
+      resource <span class="hljs-string">"aws_key_pair"</span> <span class="hljs-string">"example"</span> {
+        key_name   = <span class="hljs-string">"example-key"</span>
+        public_key = file(<span class="hljs-string">"~/.ssh/alexjust_key.pub"</span>)
+      }
+
+      resource <span class="hljs-string">"aws_security_group"</span> <span class="hljs-string">"allow_ssh_http"</span> {
+        name_prefix = <span class="hljs-string">"allow_ssh_http"</span>
+        vpc_id      = <span class="hljs-string">"vpc-0dcbbca477c748c31"</span>  <span class="hljs-comment"># Especifica el ID de la VPC</span>
+
+        ingress {
+          description = <span class="hljs-string">"SSH"</span>
+          from_port   = 22
+          to_port     = 22
+          protocol    = <span class="hljs-string">"tcp"</span>
+          cidr_blocks = [<span class="hljs-string">"0.0.0.0/0"</span>]
+        }
+
+        ingress {
+          description = <span class="hljs-string">"HTTP"</span>
+          from_port   = 80
+          to_port     = 80
+          protocol    = <span class="hljs-string">"tcp"</span>
+          cidr_blocks = [<span class="hljs-string">"0.0.0.0/0"</span>]
+        }
+
+        egress {
+          from_port   = 0
+          to_port     = 0
+          protocol    = <span class="hljs-string">"-1"</span>
+          cidr_blocks = [<span class="hljs-string">"0.0.0.0/0"</span>]
+        }
+      }
+
+      resource <span class="hljs-string">"aws_instance"</span> <span class="hljs-string">"web"</span> {
+        count         = 2
+        ami           = <span class="hljs-string">"ami-0f3d898ae42d775a6"</span>
+        instance_type = <span class="hljs-string">"t2.micro"</span>
+        key_name      = aws_key_pair.example.key_name
+        vpc_security_group_ids = [aws_security_group.allow_ssh_http.id]
+        subnet_id     = <span class="hljs-string">"subnet-0b304df8b3d7ffc22"</span>  <span class="hljs-comment"># Especifica el ID de la subred</span>
+
+        tags = {
+          Name = <span class="hljs-string">"Terraform-EC2-Web-<span class="hljs-variable">${count.index}</span>"</span>
+        }
+      }
+
+      output <span class="hljs-string">"instance_ips"</span> {
+        value = aws_instance.web[*].public_ip
+      }
+</div></code></pre>
+<pre class="hljs"><code><div>
+➜  terraform-ec2 terraform apply
+
+        aws_key_pair.example: Refreshing state... [id=example-key]
+
+        Terraform used the selected providers to generate the following execution plan. Resource actions are indicated with the following symbols:
+          + create
+
+        Terraform will perform the following actions:
+
+          <span class="hljs-comment"># aws_instance.web[0] will be created</span>
+          + resource <span class="hljs-string">"aws_instance"</span> <span class="hljs-string">"web"</span> {
+              + ami                                  = <span class="hljs-string">"ami-0f3d898ae42d775a6"</span>
+              + arn                                  = (known after apply)
+              + associate_public_ip_address          = (known after apply)
+              
+        Changes to Outputs:
+          + instance_ips = [
+              + (known after apply),
+              + (known after apply),
+            ]
+
+        Do you want to perform these actions?
+          Terraform will perform the actions described above.
+          Only <span class="hljs-string">'yes'</span> will be accepted to approve.
+
+          Enter a value: yes
+
+        aws_security_group.allow_ssh_http: Creating...
+        aws_security_group.allow_ssh_http: Creation complete after 3s [id=sg-0322a8abddb0b4be5]
+        aws_instance.web[0]: Creating...
+        aws_instance.web[1]: Creating...
+        aws_instance.web[1]: Still creating... [10s elapsed]
+        aws_instance.web[0]: Still creating... [10s elapsed]
+        aws_instance.web[0]: Still creating... [20s elapsed]
+        aws_instance.web[1]: Still creating... [20s elapsed]
+        aws_instance.web[1]: Still creating... [30s elapsed]
+        aws_instance.web[0]: Still creating... [30s elapsed]
+        aws_instance.web[0]: Creation complete after 32s [id=i-0e97d468c7be0fc05]
+        aws_instance.web[1]: Creation complete after 32s [id=i-0bdca6578a8e7b5b2]
+
+        Apply complete! Resources: 3 added, 0 changed, 0 destroyed.
+
+        Outputs:
+
+        instance_ips = [
+          <span class="hljs-string">"3.77.234.58"</span>,
+          <span class="hljs-string">"18.199.99.146"</span>,
+        ]
+</div></code></pre>
+<p><strong>Verificar las instancias</strong></p>
+<pre class="hljs"><code><div><span class="hljs-comment"># Verifica las instancias EC2</span>
+➜  terraform-ec2  aws ec2 describe-instances --query <span class="hljs-string">'Reservations[*].Instances[*].[InstanceId,State.Name,PublicIpAddress]'</span> --output table
+
+    -----------------------------------------------------
+    |                 DescribeInstances                 |
+    +----------------------+----------+-----------------+
+    |  i-08a6fb06af278ef60 |  stopped |  None           |
+    |  i-0263add159462598c |  stopped |  None           |
+    |  i-0bdca6578a8e7b5b2 |  running |  18.199.99.146  |
+    |  i-0d2325963dab29cfa |  stopped |  None           |
+    |  i-0e97d468c7be0fc05 |  running |  3.77.234.58    |
+    +----------------------+----------+-----------------+
+</div></code></pre>
+<p><strong>Entrando a las instancias</strong></p>
+<pre class="hljs"><code><div>➜  terraform-ec2 ssh -i ~/.ssh/alexjust_key ec2-user@18.199.99.146
+      The authenticity of host <span class="hljs-string">'18.199.99.146 (18.199.99.146)'</span> can<span class="hljs-string">'t be established.
+      ED25519 key fingerprint is SHA256:35AMoS7+wgXxLnhZ6wmuwr1uQlM580dTZSfdxyB0+b8.
+      This key is not known by any other names.
+      Are you sure you want to continue connecting (yes/no/[fingerprint])? yes
+      Warning: Permanently added '</span>18.199.99.146<span class="hljs-string">' (ED25519) to the list of known hosts.
+      Enter passphrase for key '</span>/Users/alex/.ssh/alexjust_key<span class="hljs-string">': 
+        ,     #_
+        ~\_  ####_        Amazon Linux 2
+        ~~  \_#####\
+        ~~     \###|       AL2 End of Life is 2025-06-30.
+        ~~       \#/ ___
+        ~~       V~'</span> <span class="hljs-string">'-&gt;
+          ~~~         /    A newer version of Amazon Linux is available!
+            ~~._.   _/
+              _/ _/       Amazon Linux 2023, GA and supported until 2028-03-15.
+            _/m/'</span>           https://aws.amazon.com/linux/amazon-linux-2023/
+
+      No packages needed <span class="hljs-keyword">for</span> security; 4 packages available
+      Run <span class="hljs-string">"sudo yum update"</span> to apply all updates.
+      -bash: warning: setlocale: LC_CTYPE: cannot change locale (UTF-8): No such file or directory
+
+[ec2-user@ip-10-0-1-34 ~]$ 
+</div></code></pre>
+<pre class="hljs"><code><div>➜  terraform-ec2 ssh -i ~/.ssh/alexjust_key ec2-user@3.77.234.58
+      The authenticity of host <span class="hljs-string">'3.77.234.58 (3.77.234.58)'</span> can<span class="hljs-string">'t be established.
+      ED25519 key fingerprint is SHA256:iCsG/Z5TZjrjA9gEZwb9zOT45C4blxkPui86QBPhlzI.
+      This key is not known by any other names.
+      Are you sure you want to continue connecting (yes/no/[fingerprint])? yes
+      Warning: Permanently added '</span>3.77.234.58<span class="hljs-string">' (ED25519) to the list of known hosts.
+      Enter passphrase for key '</span>/Users/alex/.ssh/alexjust_key<span class="hljs-string">': 
+        ,     #_
+        ~\_  ####_        Amazon Linux 2
+        ~~  \_#####\
+        ~~     \###|       AL2 End of Life is 2025-06-30.
+        ~~       \#/ ___
+        ~~       V~'</span> <span class="hljs-string">'-&gt;
+          ~~~         /    A newer version of Amazon Linux is available!
+            ~~._.   _/
+              _/ _/       Amazon Linux 2023, GA and supported until 2028-03-15.
+            _/m/'</span>           https://aws.amazon.com/linux/amazon-linux-2023/
+
+      No packages needed <span class="hljs-keyword">for</span> security; 4 packages available
+      Run <span class="hljs-string">"sudo yum update"</span> to apply all updates.
+      -bash: warning: setlocale: LC_CTYPE: cannot change locale (UTF-8): No such file or directory
+
+[ec2-user@ip-10-0-1-215 ~]$ 
+</div></code></pre>
+<p><strong>Creando el HOLA MUNDO!</strong></p>
+<pre class="hljs"><code><div>[ec2-user@ip-10-0-1-215 ~]$ sudo yum update -y
+[ec2-user@ip-10-0-1-215 ~]$ sudo systemctl start httpd
+[ec2-user@ip-10-0-1-215 ~]$ sudo systemctl <span class="hljs-built_in">enable</span> httpd
+      Created symlink from /etc/systemd/system/multi-user.target.wants/httpd.service to /usr/lib/systemd/system/httpd.service.
+
+[ec2-user@ip-10-0-1-215 ~]$ <span class="hljs-built_in">echo</span> <span class="hljs-string">'&lt;html&gt;&lt;h1&gt;¡Hola, mundo!&lt;/h1&gt;&lt;/html&gt;'</span> | sudo tee /var/www/html/index.html
+
+      &lt;html&gt;&lt;h1&gt;¡Hola, mundo!&lt;/h1&gt;&lt;/html&gt;
+
+
+[ec2-user@ip-10-0-1-215 ~]$ sudo systemctl status httpd
+      ● httpd.service - The Apache HTTP Server
+        Loaded: loaded (/usr/lib/systemd/system/httpd.service; enabled; vendor preset: disabled)
+        Active: active (running) since Thu 2024-06-13 08:40:35 UTC; 23s ago
+          Docs: man:httpd.service(8)
+      Main PID: 6386 (httpd)
+        Status: <span class="hljs-string">"Total requests: 0; Idle/Busy workers 100/0;Requests/sec: 0; Bytes served/sec:   0 B/sec"</span>
+        CGroup: /system.slice/httpd.service
+                ├─6386 /usr/sbin/httpd -DFOREGROUND
+                ├─6387 /usr/sbin/httpd -DFOREGROUND
+                ├─6388 /usr/sbin/httpd -DFOREGROUND
+                ├─6389 /usr/sbin/httpd -DFOREGROUND
+                ├─6390 /usr/sbin/httpd -DFOREGROUND
+                └─6391 /usr/sbin/httpd -DFOREGROUND
+
+      Jun 13 08:40:35 ip-10-0-1-215.eu-central-1.compute.internal systemd[1]: Starting The Apache HTTP Server...
+      Jun 13 08:40:35 ip-10-0-1-215.eu-central-1.compute.internal systemd[1]: Started The Apache HTTP Server.
+      [ec2-user@ip-10-0-1-215 ~]$ 
+</div></code></pre>
+<p><img src="file:///Users/alex/Library/CloudStorage/GoogleDrive-arodriguezjus@uoc.edu/My Drive/1 UOC/00_SEMESTRE/Infraestructuras tecnológicas para Big Data/git/img/40.png" alt=""></p>
+<p><strong>Eliminación del recurso</strong></p>
+<pre class="hljs"><code><div>➜  terraform-ec2 terraform destroy
+
+
+        Enter a value: yes
+
+      aws_instance.web[1]: Destroying... [id=i-0bdca6578a8e7b5b2]
+      aws_instance.web[0]: Destroying... [id=i-0e97d468c7be0fc05]
+      aws_instance.web[1]: Still destroying... [id=i-0bdca6578a8e7b5b2, 10s elapsed]
+      aws_instance.web[0]: Still destroying... [id=i-0e97d468c7be0fc05, 10s elapsed]
+      aws_instance.web[0]: Still destroying... [id=i-0e97d468c7be0fc05, 20s elapsed]
+      aws_instance.web[1]: Still destroying... [id=i-0bdca6578a8e7b5b2, 20s elapsed]
+      aws_instance.web[0]: Still destroying... [id=i-0e97d468c7be0fc05, 30s elapsed]
+      aws_instance.web[1]: Still destroying... [id=i-0bdca6578a8e7b5b2, 30s elapsed]
+      aws_instance.web[0]: Still destroying... [id=i-0e97d468c7be0fc05, 40s elapsed]
+      aws_instance.web[1]: Still destroying... [id=i-0bdca6578a8e7b5b2, 40s elapsed]
+      aws_instance.web[0]: Destruction complete after 40s
+      aws_instance.web[1]: Destruction complete after 40s
+      aws_key_pair.example: Destroying... [id=example-key]
+      aws_security_group.allow_ssh_http: Destroying... [id=sg-0322a8abddb0b4be5]
+      aws_key_pair.example: Destruction complete after 0s
+      aws_security_group.allow_ssh_http: Destruction complete after 1s
+
+      Destroy complete! Resources: 4 destroyed.
+</div></code></pre>
+<pre class="hljs"><code><div>➜  terraform-ec2 git:(main) ✗ aws ec2 describe-instances --query <span class="hljs-string">'Reservations[*].Instances[*].[InstanceId,State.Name,PublicIpAddress]'</span> --output table
+
+-----------------------------------------------
+|              DescribeInstances              |
++----------------------+--------------+-------+
+|  i-08a6fb06af278ef60 |  stopped     |  None |
+|  i-0263add159462598c |  stopped     |  None |
+|  i-0bdca6578a8e7b5b2 |  terminated  |  None |
+|  i-0d2325963dab29cfa |  stopped     |  None |
+|  i-0e97d468c7be0fc05 |  terminated  |  None |
++----------------------+--------------+-------+
+</div></code></pre>
+
+</body>
+</html>

@@ -1552,3 +1552,48 @@ El comando plan te muestra lo que Terraform va a crear, modificar o destruir
 ```
 
 ![](../img/40.png)
+
+
+**Eliminación del recurso**
+
+
+```sh
+➜  terraform-ec2 terraform destroy
+
+
+        Enter a value: yes
+
+      aws_instance.web[1]: Destroying... [id=i-0bdca6578a8e7b5b2]
+      aws_instance.web[0]: Destroying... [id=i-0e97d468c7be0fc05]
+      aws_instance.web[1]: Still destroying... [id=i-0bdca6578a8e7b5b2, 10s elapsed]
+      aws_instance.web[0]: Still destroying... [id=i-0e97d468c7be0fc05, 10s elapsed]
+      aws_instance.web[0]: Still destroying... [id=i-0e97d468c7be0fc05, 20s elapsed]
+      aws_instance.web[1]: Still destroying... [id=i-0bdca6578a8e7b5b2, 20s elapsed]
+      aws_instance.web[0]: Still destroying... [id=i-0e97d468c7be0fc05, 30s elapsed]
+      aws_instance.web[1]: Still destroying... [id=i-0bdca6578a8e7b5b2, 30s elapsed]
+      aws_instance.web[0]: Still destroying... [id=i-0e97d468c7be0fc05, 40s elapsed]
+      aws_instance.web[1]: Still destroying... [id=i-0bdca6578a8e7b5b2, 40s elapsed]
+      aws_instance.web[0]: Destruction complete after 40s
+      aws_instance.web[1]: Destruction complete after 40s
+      aws_key_pair.example: Destroying... [id=example-key]
+      aws_security_group.allow_ssh_http: Destroying... [id=sg-0322a8abddb0b4be5]
+      aws_key_pair.example: Destruction complete after 0s
+      aws_security_group.allow_ssh_http: Destruction complete after 1s
+
+      Destroy complete! Resources: 4 destroyed.
+```
+
+
+```sh
+➜  terraform-ec2 git:(main) ✗ aws ec2 describe-instances --query 'Reservations[*].Instances[*].[InstanceId,State.Name,PublicIpAddress]' --output table
+
+-----------------------------------------------
+|              DescribeInstances              |
++----------------------+--------------+-------+
+|  i-08a6fb06af278ef60 |  stopped     |  None |
+|  i-0263add159462598c |  stopped     |  None |
+|  i-0bdca6578a8e7b5b2 |  terminated  |  None |
+|  i-0d2325963dab29cfa |  stopped     |  None |
+|  i-0e97d468c7be0fc05 |  terminated  |  None |
++----------------------+--------------+-------+
+```
