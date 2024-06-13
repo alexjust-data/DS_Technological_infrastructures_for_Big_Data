@@ -1,0 +1,25 @@
+---
+- hosts: webserver
+  become: yes
+  tasks:
+    - name: Actualizar la lista de paquetes
+      yum:
+        name: '*'
+        state: latest
+
+    - name: Instalar Apache2
+      yum:
+        name: httpd
+        state: present
+
+    - name: Iniciar el servicio de Apache2
+      service:
+        name: httpd
+        state: started
+        enabled: yes
+
+    - name: Crear una página web de ejemplo
+      copy:
+        content: "<html><h1>¡Hola, mundo!</h1></html>"
+        dest: /var/www/html/index.html
+

@@ -1,0 +1,198 @@
+---
+- name: Deploy LAMP stack on remote host
+  hosts: lamp_servers
+  become: yes
+  vars_files:
+    - vault.yml
+
+  tasks:
+    - name: Ensure no other apt processes are running
+      shell: |
+        pids=$(ps aux | grep -v grep | grep -E 'apt|dpkg' | awk '{print $2}')
+        if [ -n "$pids" ]; then
+          kill -9 $pids
+        fi
+      ignore_errors: yes
+
+    - name: Ensure no dpkg locks are present
+      file:
+        path: /var/lib/dpkg/lock-frontend
+        state: absent
+      become: yes
+
+    - name: Ensure no dpkg locks are present (2)
+      file:
+        path: /var/lib/dpkg/lock
+        state: absent
+      become: yes
+
+    - name: Configure dpkg in case of inconsistencies
+      shell: dpkg --configure -a
+      become: yes
+      ignore_errors: yes
+
+    - name: Update and upgrade apt packages
+      apt:
+        update_cache: yes
+        upgrade: dist
+      retries: 5
+      delay: 30
+      register: update_result
+      until: update_result is succeeded
+
+    - name: Preconfigure MariaDB root password
+      debconf:
+        name: "mariadb-server"
+        question: "mysql-server/root_password"
+        value: "{{ mysql_root_password }}"
+        vtype: "password"
+
+    - name: Preconfigure MariaDB root password again
+      debconf:
+        name: "mariadb-server"
+        question: "mysql-server/root_password_again"
+        value: "{{ mysql_root_password }}"
+        vtype: "password"
+
+    - name: Install Apache
+      apt:
+        name: apache2
+        state: present
+
+    - name: Install MySQL/MariaDB
+      apt:
+        name: mariadb-server
+        state: present
+
+    - name: Install PHP and modules
+      apt:
+        name:
+          - php
+          - php-mysql
+          - libapache2-mod-php
+        state: present
+
+    - name: Start and enable Apache service
+      service:
+        name: apache2
+        state: started
+        enabled: yes
+
+    - name: Start and enable MariaDB service
+      service:
+        name: mariadb
+        state: started
+        enabled: yes
+
+    - name: Set root password for MariaDB
+      community.mysql.mysql_user:
+        name: root
+        host: localhost
+        password: "{{ mysql_root_password }}"
+        login_user: root
+        login_password: "{{ mysql_root_password }}"
+        state: present
+        check_implicit_admin: true
+
+    - name: Remove anonymous users
+      mysql_user:
+        name: ''
+        host_all: true
+        state: absent
+        login_user: root
+        login_password: "{{ mysql_root_password }}"
+
+    - name: Disallow root login remotely
+      mysql_user:
+        name: root
+        host: '%'
+        state: absent
+        login_user: root
+        login_password: "{{ mysql_root_password }}"
+
+    - name: Remove test database
+      mysql_db:
+        name: test
+        state: absent
+        login_user: root
+        login_password: "{{ mysql_root_password }}"
+
+    - name: Reload privilege tables
+      mysql_query:
+        query: "FLUSH PRIVILEGES;"
+        login_user: root
+        login_password: "{{ mysql_root_password }}"
+
+    - name: Create a MySQL database
+      community.mysql.mysql_db:
+        name: test_db
+        state: present
+        login_user: root
+        login_password: "{{ mysql_root_password }}"
+
+    - name: Create a MySQL user with privileges
+      community.mysql.mysql_user:
+        name: test_user
+        password: "{{ mysql_user_password }}"
+        priv: 'test_db.*:ALL'
+        state: present
+        login_user: root
+        login_password: "{{ mysql_root_password }}"
+
+    - name: Copy PHP info page
+      copy:
+        content: |
+          <?php
+          phpinfo();
+          ?>
+        dest: /var/www/html/info.php
+        owner: www-data
+        group: www-data
+        mode: '0644'
+
+    - name: Copy PHP test page for DB connection
+      copy:
+        content: |
+          <?php
+          $servername = "localhost";
+          $username = "test_user";
+          $password = "{{ mysql_user_password }}";
+          $dbname = "test_db";
+
+          // Create connection
+          $conn = new mysqli($servername, $username, $password, $dbname);
+
+          // Check connection
+          if ($conn->connect_error) {
+            die("Connection failed: " . $conn->connect_error);
+          }
+          echo "Connected successfully to the database.";
+
+          $sql = "SELECT DATABASE()";
+          $result = $conn->query($sql);
+
+          if ($result->num_rows > 0) {
+            // Output data of each row
+            while($row = $result->fetch_assoc()) {
+              echo " Database: " . $row["DATABASE()"];
+            }
+          } else {
+            echo "0 results";
+          }
+          $conn->close();
+          ?>
+        dest: /var/www/html/test_db.php
+        owner: www-data
+        group: www-data
+        mode: '0644'
+
+    - name: Ensure Apache is running
+      service:
+        name: apache2
+        state: started
+
+    - name: Ensure MariaDB is running
+      service:
+        name: mariadb
+        state: started
+

@@ -1,0 +1,82 @@
+---
+- name: Configure Apache Website
+  hosts: webserver
+  become: yes
+
+  vars_files:
+    - vault.yml
+
+  tasks:
+    - name: Update and upgrade apt packages
+      apt:
+        update_cache: yes
+        upgrade: dist
+
+    - name: Install Apache
+      apt:
+        name: apache2
+        state: present
+
+    - name: Create the document root directories
+      file:
+        path: "{{ item }}"
+        state: directory
+        owner: www-data
+        group: www-data
+        mode: '0755'
+      with_items:
+        - /var/www/html
+        - /var/www/html/secure
+
+    - name: Create an index.html file
+      copy:
+        content: |
+          <html>
+          <head><title>Welcome to My Website</title></head>
+          <body><h1>Hello, World!</h1></body>
+          </html>
+        dest: /var/www/html/index.html
+        owner: www-data
+        group: www-data
+        mode: '0644'
+
+    - name: Create a secure index.html file
+      copy:
+        content: |
+          <html>
+          <head><title>Secure Area</title></head>
+          <body><h1>Welcome to the secure area</h1></body>
+          </html>
+        dest: /var/www/html/secure/index.html
+        owner: www-data
+        group: www-data
+        mode: '0644'
+
+    - name: Install Apache utilities
+      apt:
+        name: apache2-utils
+        state: present
+
+    - name: Create a password file for the secure directory
+      command: htpasswd -b -c /etc/apache2/.htpasswd myuser "{{ secure_password }}"
+
+    - name: Configure the secure directory
+      blockinfile:
+        path: /etc/apache2/sites-available/000-default.conf
+        insertafter: 'DocumentRoot /var/www/html'
+        content: |
+          <Directory /var/www/html/secure>
+            AuthType Basic
+            AuthName "Restricted Content"
+            AuthUserFile /etc/apache2/.htpasswd
+            Require valid-user
+          </Directory>
+
+    - name: Enable the Apache configuration
+      shell: a2enmod auth_basic
+
+    - name: Restart Apache
+      service:
+        name: apache2
+        state: restarted
+

@@ -1,0 +1,67 @@
+---
+- hosts: all
+  become: yes
+
+  tasks:
+    - name: Instalar Apache
+      apt:
+        name: apache2
+        state: present
+        update_cache: yes
+
+    - name: Instalar pip y passlib
+      apt:
+        name: "{{ item }}"
+        state: present
+      with_items:
+        - python3-pip
+        - python3-passlib
+
+    - name: Crear directorios para el sitio web
+      file:
+        path: "{{ item }}"
+        state: directory
+      with_items:
+        - /var/www/html
+        - /var/www/html/secure
+
+    - name: Crear página principal
+      copy:
+        dest: /var/www/html/index.html
+        content: "<h1>Bienvenido a la página principal</h1>"
+
+    - name: Crear página privada
+      copy:
+        dest: /var/www/html/secure/index.html
+        content: "<h1>Bienvenido a la página privada</h1>"
+
+    - name: Crear archivo de configuración para el directorio seguro si no existe
+      file:
+        path: /etc/apache2/conf-available/secure.conf
+        state: touch
+
+    - name: Configurar autenticación para el directorio privado
+      blockinfile:
+        path: /etc/apache2/conf-available/secure.conf
+        block: |
+          <Directory /var/www/html/secure>
+              AuthType Basic
+              AuthName "Restricted Content"
+              AuthUserFile /etc/apache2/.htpasswd
+              Require valid-user
+          </Directory>
+
+    - name: Crear usuario para autenticación básica
+      community.general.htpasswd:
+        path: /etc/apache2/.htpasswd
+        name: usuario
+        password: passwd
+
+    - name: Habilitar el sitio seguro
+      shell: a2enconf secure
+
+    - name: Reiniciar Apache
+      service:
+        name: apache2
+        state: restarted
+
